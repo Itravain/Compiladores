@@ -4,12 +4,15 @@
 #include "../globals.h"
 #define NUMMAXFILHOS 3
 #define MAXLEXEME 25
+#define MAX_TEMP 32
 
 const char *operacoes_nomes[] = {
     "FUN", "ARG", "LOAD", "EQUAL", "IFF", "RET", "GOTO", "LAB",
-    "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM"
+    "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ASSIGN"
 };
 const int NUM_OPERACOES = sizeof(operacoes_nomes) / sizeof(operacoes_nomes[0]);
+
+char escopo[MAXLEXEME +1]; 
 
 Tac *criarTac(Tac *estrutura_tac){
     estrutura_tac = malloc(sizeof(Tac));
@@ -130,11 +133,15 @@ void imprimirTac(FILE *arqCodInterm, Tac *tac){
     fflush(arqCodInterm);
 }
 
+
 char* gerar_temporario() {
-    static int temp_count = 0;
     char* temp_name = malloc(12);
+    static int temp_count = 0;
     if (temp_name) {
         sprintf(temp_name, "t%d", temp_count++);
+    }
+    if(temp_count >= MAX_TEMP){
+        temp_count = 1;
     }
     return temp_name;
 }
@@ -239,7 +246,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr) {
                 case op_k: {
                     char *res1 = percorrer_arvore(node_tree->filho[0], tac_list_ptr);
                     char *res2 = percorrer_arvore(node_tree->filho[1], tac_list_ptr);
-
+                    
                     if (res1 && res2) {
                         result_str = gerar_temporario();
                         if (!result_str) { free(res1); free(res2); return NULL; }
@@ -249,6 +256,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr) {
                         else if (strcmp(node_tree->lexmema, "-") == 0) op = SUB;
                         else if (strcmp(node_tree->lexmema, "*") == 0) op = MUL;
                         else if (strcmp(node_tree->lexmema, "/") == 0) op = DIV;
+                        else if (strcmp(node_tree->lexmema, "==") == 0) op = EQUAL;
                         else {
                             fprintf(stderr, "Error: Unrecognized operator '%s'\n", node_tree->lexmema);
                             op = -1;
@@ -266,10 +274,18 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr) {
                     break;
                 }
                 case constant_k:
-                case id_k:
-                    result_str = strdup(node_tree->lexmema);
+                case id_k: {
+                    char *tmp = gerar_temporario();
+                    if (tmp != NULL) {
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, LOAD, tmp, node_tree->lexmema, "");
+                        result_str = strdup(tmp);  
+                        free(tmp); 
+                    } else {
+                        fprintf(stderr, "Error: Failed to generate temporary variable.\n");
+                        result_str = NULL;
+                    }
                     break;
-
+                }
                 case assign_k: {
                     char *rhs_res = percorrer_arvore(node_tree->filho[1], tac_list_ptr);
                     char *lhs_name = NULL;
@@ -288,6 +304,31 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr) {
                     free(rhs_res);
                     break;
                 }
+                case ativ_k:{
+                    // Conta quantos argumentos tem a chamada de função
+                    int num_params = 0;
+                    No* param_node = node_tree->filho[0];
+                    
+                    // Percorre a lista de argumentos (são os irmãos do primeiro filho)
+                    while(param_node != NULL) {
+                        num_params++;
+                        param_node = param_node->irmao;
+                    }
+                    
+                    // Converte o número para string
+                    char params_str[10];
+                    sprintf(params_str, "%d", num_params);
+                    
+                    // Processa os argumentos na ordem correta
+                    char *tmp = percorrer_arvore(node_tree->filho[0], tac_list_ptr);
+                    if (tmp != NULL) {
+                        // Usa o campo resultado para armazenar o número de parâmetros
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, CALL, tmp, node_tree->lexmema, params_str);
+                        free(tmp);
+                    }
+                    result_str = NULL;
+                    break;
+                }
                 default:
                     result_str = NULL;
                     break;
@@ -301,6 +342,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr) {
                 case fun_k:
                     if(strcmp(node_tree->lexmema, "int") !=0 && strcmp(node_tree->lexmema, "void") != 0){
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, FUN, node_tree->pai->lexmema, node_tree->lexmema, "");
+                        strncpy(escopo, node_tree->lexmema, MAXLEXEME);
                     }
                     for (int i = 0; i < NUMMAXFILHOS; i++) {
                         if (node_tree->filho[i]) {
@@ -315,12 +357,13 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr) {
 
                     break;
                 case param_k:
-                    *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, node_tree->lexmema, "", "");
                     
+                    *tac_list_ptr = criarNoTac(*tac_list_ptr, ARG, node_tree->pai->lexmema, node_tree->lexmema, escopo);                   
                     result_str = NULL;
                     break;
 
                 case var_k:
+                    res_child = percorrer_arvore(node_tree->filho[0], tac_list_ptr);
                     result_str = NULL;
                     break;
 
