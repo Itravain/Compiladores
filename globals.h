@@ -8,7 +8,7 @@
 
 typedef enum {statement_k, expression_k, declaration_k} NodeKind;
 typedef enum {if_k, while_k, return_k, break_k, continue_k, expression_statement_k} StatementKind;
-typedef enum {op_k, constant_k, id_k, type_k, arr_k, ativ_k, assign_k} ExpressionKind;
+typedef enum {op_k, constant_k, id_k, type_k, arr_k, ativ_k, assign_k, parametro_exp_t} ExpressionKind;
 typedef enum {var_k, fun_k, param_k, unknown_k} DeclarationKind;
 
 typedef struct no
@@ -76,7 +76,7 @@ void check_main_function();
 int count_symbol(char* name, char* scope, HashTable* symbol_table);
 
 //Código intermediário
-enum operacoes {FUN, ARG, LOAD, EQUAL, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM};
+enum operacoes {FUN, ARG, LOAD, EQUAL, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC};
 
 typedef struct tacNo{
     enum operacoes operacao;
@@ -99,5 +99,5 @@ Tac *liberarTac(Tac *estrutura_tac);
 void imprimirTac(FILE *arqCodInterm, Tac *tac);
 
 // Função para percorrer a árvore e gerar TAC
-char* percorrer_arvore(No *node_tree, Tac **tac);
+char* percorrer_arvore(No *node_tree, Tac **tac, int expression_parametro);
 void codigo_intermediario(No *node_tree, Tac *tac);
