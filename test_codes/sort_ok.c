@@ -1,8 +1,9 @@
-/* programa para ordena��o por sele��o de 
+/* programa para ordenacao por selecao de 
    uma matriz com dez elementos. */
 /**/
 /**/
 int vet[ 10 ];
+int jonias;
 
 int minloc ( int a[], int low, int high )
 {	

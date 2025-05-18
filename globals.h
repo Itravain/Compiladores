@@ -76,7 +76,7 @@ void check_main_function();
 int count_symbol(char* name, char* scope, HashTable* symbol_table);
 
 //Código intermediário
-enum operacoes {FUN, ARG, LOAD, EQUAL, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN};
+enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN};
 
 typedef struct tacNo{
     enum operacoes operacao;

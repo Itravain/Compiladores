@@ -7,12 +7,12 @@
 #define MAX_TEMP 32
 
 const char *operacoes_nomes[] = {
-    "FUN", "ARG", "LOAD", "EQUAL", "IFF", "RET", "GOTO", "LAB",
+    "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "IFF", "RET", "GOTO", "LAB",
     "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN"
 };
 const int NUM_OPERACOES = sizeof(operacoes_nomes) / sizeof(operacoes_nomes[0]);
 
-char escopo[MAXLEXEME +1]; 
+char escopo[MAXLEXEME+1] = "global\0"; 
 
 Tac *criarTac(Tac *estrutura_tac){
     estrutura_tac = malloc(sizeof(Tac));
@@ -28,7 +28,8 @@ Tac *criarNoTac(Tac *estrutura_tac, int operacao,
                 const char *resultado) {
     TacNo* novoNo = malloc(sizeof(TacNo));
     if (novoNo == NULL) {
-        perror("Failed to allocate TacNo");
+        fprintf(stderr, "Erro [criarNoTac]: Falha na alocação de memória para novo nó TAC (operação: %s). Possível falta de memória.\n", 
+                operacoes_nomes[operacao]);
         return estrutura_tac;
     }
     //Preencher informações
@@ -88,22 +89,22 @@ Tac *liberarTac(Tac *estrutura_tac){
 
 void imprimirTac(FILE *arqCodInterm, Tac *tac){
     if (arqCodInterm == NULL) {
-        fprintf(stderr, "Error: Invalid file pointer passed to imprimirTac.\n");
+        fprintf(stderr, "Erro [imprimirTac]: Arquivo de saída inválido. Verifique se o arquivo foi aberto corretamente.\n");
         return;
     }
 
     if (tac == NULL)
     {
-        fprintf(arqCodInterm, "; TAC List: Not generated (NULL structure)\n");
-        printf("imprimirTac: TAC structure is NULL.\n");
+        fprintf(stderr, "Erro [imprimirTac]: Estrutura TAC nula. A geração de código intermediário falhou anteriormente.\n");
+        fprintf(arqCodInterm, "; Lista TAC: Não gerada (estrutura NULL)\n");
         return;
     }
     else if(tac->qtdNos == 0){
-        fprintf(arqCodInterm, "; TAC List: Empty\n");
+        fprintf(arqCodInterm, "; Lista TAC: Vazia\n");
         printf("imprimirTac: TAC structure is empty (qtdNos = 0).\n");
     }
     else{
-        fprintf(arqCodInterm, "; TAC List Generated (%d instructions)\n", tac->qtdNos);
+        fprintf(arqCodInterm, "; Lista TAC Gerada (%d instruções)\n", tac->qtdNos);
         printf("imprimirTac: Printing %d TAC instructions to file.\n", tac->qtdNos);
 
         TacNo *percorre = tac->inicio;
@@ -115,7 +116,8 @@ void imprimirTac(FILE *arqCodInterm, Tac *tac){
             if (percorre->operacao >= 0 && percorre->operacao < NUM_OPERACOES) {
                 op_nome = operacoes_nomes[percorre->operacao];
             } else {
-                fprintf(stderr, "Warning: Unknown TAC operation enum value %d at instruction %d\n", percorre->operacao, contador);
+                fprintf(stderr, "Erro [imprimirTac]: Operação TAC desconhecida (%d) na instrução %d. A tabela de operações pode estar incorreta.\n", 
+                        percorre->operacao, contador);
             }
 
             fprintf(arqCodInterm, "(%d) (%s, %s, %s, %s)\n",
@@ -128,7 +130,7 @@ void imprimirTac(FILE *arqCodInterm, Tac *tac){
             percorre = percorre->proximo;
             contador++;
         }
-        fprintf(arqCodInterm, "; End of TAC List\n");
+        fprintf(arqCodInterm, "; Fim da Lista TAC\n");
     }
     fflush(arqCodInterm);
 }
@@ -156,8 +158,8 @@ char* gerar_label() {
 }
 
 char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_parametro) {
+    
     if (node_tree == NULL) return NULL;
-
     char *result_str = NULL;
 
     switch (node_tree->kind_node) {
@@ -167,14 +169,17 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                 case if_k: {
                     char *label_else = gerar_label();
                     char *label_end = gerar_label();
-                    if (!label_else || !label_end) { return NULL; }
+                    if (!label_else || !label_end) { 
+                        fprintf(stderr, "Erro [if_k]: Falha na geração de rótulos para o comando IF. Possível falta de memória.\n");
+                        return NULL; 
+                    }
 
                     char *cond_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 0);
                     if (cond_res) {
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, IFF, cond_res, "", label_else);
                         free(cond_res);
                     } else {
-                        fprintf(stderr, "Error: If condition did not produce a result.\n");
+                        fprintf(stderr, "Erro [if_k]: A condição do IF na linha %d não produziu um resultado válido. Verifique a expressão.\n", node_tree->linha);
                     }
 
                     res_child = percorrer_arvore(node_tree->filho[1], tac_list_ptr, 0);
@@ -196,7 +201,10 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                 case while_k: {
                     char *label_start = gerar_label();
                     char *label_end = gerar_label();
-                    if (!label_start || !label_end) { return NULL; }
+                    if (!label_start || !label_end) { 
+                        fprintf(stderr, "Erro [while_k]: Falha na geração de rótulos para o comando WHILE. Possível falta de memória.\n");
+                        return NULL; 
+                    }
 
                     *tac_list_ptr = criarNoTac(*tac_list_ptr, LAB, label_start, "", "");
 
@@ -205,7 +213,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, IFF, cond_res, "", label_end);
                         free(cond_res);
                     } else {
-                        fprintf(stderr, "Error: While condition did not produce a result.\n");
+                        fprintf(stderr, "Erro [while_k]: A condição do WHILE na linha %d não produziu um resultado válido. Verifique a expressão.\n", node_tree->linha);
                     }
 
                     res_child = percorrer_arvore(node_tree->filho[1], tac_list_ptr,0);
@@ -225,7 +233,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                             *tac_list_ptr = criarNoTac(*tac_list_ptr, RET, ret_val, "", "");
                             free(ret_val);
                         } else {
-                            fprintf(stderr, "Error: Return expression did not produce a result.\n");
+                            fprintf(stderr, "Erro [return_k]: A expressão de retorno na linha %d não produziu um resultado válido. Verifique a expressão.\n", node_tree->linha);
                         }
                     } else {
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, RET, "", "", "");
@@ -249,7 +257,12 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     
                     if (res1 && res2) {
                         result_str = gerar_temporario();
-                        if (!result_str) { free(res1); free(res2); return NULL; }
+                        if (!result_str) { 
+                            fprintf(stderr, "Erro [op_k]: Falha ao gerar variável temporária para operação '%s'. Possível falta de memória.\n", node_tree->lexmema);
+                            free(res1); 
+                            free(res2); 
+                            return NULL; 
+                        }
 
                         enum operacoes op;
                         if (strcmp(node_tree->lexmema, "+") == 0) op = SUM;
@@ -257,8 +270,10 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                         else if (strcmp(node_tree->lexmema, "*") == 0) op = MUL;
                         else if (strcmp(node_tree->lexmema, "/") == 0) op = DIV;
                         else if (strcmp(node_tree->lexmema, "==") == 0) op = EQUAL;
+                        else if (strcmp(node_tree->lexmema, ">") == 0) op = GREATER;
+                        else if (strcmp(node_tree->lexmema, "<") == 0) op = LESS;
                         else {
-                            fprintf(stderr, "Error: Unrecognized operator '%s'\n", node_tree->lexmema);
+                            fprintf(stderr, "Erro: Operador não reconhecido '%s'\n", node_tree->lexmema);
                             op = -1;
                         }
 
@@ -269,7 +284,8 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                             *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, result_str, "", "");
                         }
                     } else {
-                        fprintf(stderr, "Error: Operands for '%s' did not produce results.\n", node_tree->lexmema);
+                        fprintf(stderr, "Erro [op_k]: Os operandos para operação '%s' na linha %d não produziram resultados válidos. Verifique a expressão.\n", 
+                                node_tree->lexmema, node_tree->linha);
                         result_str = NULL;
                     }
                     free(res1);
@@ -288,7 +304,8 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                         result_str = strdup(tmp);  
                         free(tmp); 
                     } else {
-                        fprintf(stderr, "Error: Failed to generate temporary variable.\n");
+                        fprintf(stderr, "Erro [id_k/constant_k]: Falha ao gerar variável temporária para '%s' na linha %d. Possível falta de memória.\n", 
+                                node_tree->lexmema, node_tree->linha);
                         result_str = NULL;
                     }
                     break;
@@ -305,7 +322,8 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                         }
                         
                     } else {
-                        fprintf(stderr, "Error: Invalid assignment structure or RHS failed.\n");
+                        fprintf(stderr, "Erro [assign_k]: Atribuição inválida na linha %d. Lado esquerdo ou direito produziu resultado nulo.\n", 
+                                node_tree->linha);
                         result_str = NULL;
                     }
                     free(rhs_res);
@@ -360,6 +378,10 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     if(strcmp(node_tree->lexmema, "int") !=0 && strcmp(node_tree->lexmema, "void") != 0){
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, END, node_tree->lexmema, "", "");
                     }
+                    if (strcmp(node_tree->lexmema, "main") == 0){
+                      *tac_list_ptr = criarNoTac(*tac_list_ptr, HALT, "", "", "");  
+                    }
+                    
                     result_str = NULL;
 
                     break;
