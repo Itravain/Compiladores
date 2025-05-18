@@ -8,7 +8,7 @@
 
 const char *operacoes_nomes[] = {
     "FUN", "ARG", "LOAD", "EQUAL", "IFF", "RET", "GOTO", "LAB",
-    "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ASSIGN", "ALLOC"
+    "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN"
 };
 const int NUM_OPERACOES = sizeof(operacoes_nomes) / sizeof(operacoes_nomes[0]);
 
@@ -328,12 +328,11 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     
 
                     char *tmp = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 1);
-                    if (tmp != NULL) {
-                        // Usa o campo resultado para armazenar o número de parâmetros
-                        *tac_list_ptr = criarNoTac(*tac_list_ptr, CALL, tmp, node_tree->lexmema, params_str);
-                        return tmp;
-                        free(tmp);
-                    }
+                    tmp = gerar_temporario();
+                    // Usa o campo resultado para armazenar o número de parâmetros
+                    *tac_list_ptr = criarNoTac(*tac_list_ptr, CALL, tmp, node_tree->lexmema, params_str);
+                    return tmp;
+                    free(tmp);
                     result_str = NULL;
                     break;
                 }
@@ -364,15 +363,19 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     result_str = NULL;
 
                     break;
-                case param_k:
-                    
+                case param_k:              
                     *tac_list_ptr = criarNoTac(*tac_list_ptr, ARG, node_tree->pai->lexmema, node_tree->lexmema, escopo);                   
                     result_str = NULL;
                     break;
 
                 case var_k:
                     res_child = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 0);
-                    result_str = NULL;
+                    if (strcmp(node_tree->lexmema, "int") !=0 && strcmp(node_tree->lexmema, "void") != 0)
+                    {
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, ALLOC, node_tree->lexmema, escopo, "");
+                        result_str = NULL;
+                    }
+                    
                     break;
 
                 default:
