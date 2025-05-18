@@ -294,16 +294,16 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     break;
                 }
                 case assign_k: {
+                    char *lhs_name = percorrer_arvore(node_tree->filho[0], tac_list_ptr,0);
                     char *rhs_res = percorrer_arvore(node_tree->filho[1], tac_list_ptr,0);
-                    char *lhs_name = NULL;
-
-                    if (node_tree->filho[0]->kind_node == expression_k && node_tree->filho[0]->kind_union.expr == id_k) {
-                        lhs_name = node_tree->filho[0]->lexmema;
-                    }
 
                     if (rhs_res && lhs_name) {
-                        *tac_list_ptr = criarNoTac(*tac_list_ptr, EQUAL, rhs_res, "", lhs_name);
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, ASSIGN, rhs_res, "", lhs_name);
                         result_str = strdup(lhs_name);
+                        if (strcmp(node_tree->filho[1]->lexmema, "input")==0){
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, STORE, lhs_name, "", node_tree->filho[0]->lexmema);
+                        }
+                        
                     } else {
                         fprintf(stderr, "Error: Invalid assignment structure or RHS failed.\n");
                         result_str = NULL;
@@ -312,24 +312,24 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     break;
                 }
                 case ativ_k:{
-                    // Conta quantos argumentos tem a chamada de função
                     int num_params = 0;
                     No* param_node = node_tree->filho[0];
                     
-                    // Percorre a lista de argumentos (são os irmãos do primeiro filho)
+                    char *tmp = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 1);
+                    if (expression_parametro){
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, tmp, "", "");
+                        }
+            
                     while(param_node != NULL) {
                         num_params++;
                         param_node = param_node->irmao;
                     }
                     
-                    // Converte o número para string
                     char params_str[10];
                     sprintf(params_str, "%d", num_params);
                     
 
-                    char *tmp = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 1);
                     tmp = gerar_temporario();
-                    // Usa o campo resultado para armazenar o número de parâmetros
                     *tac_list_ptr = criarNoTac(*tac_list_ptr, CALL, tmp, node_tree->lexmema, params_str);
                     return tmp;
                     free(tmp);
