@@ -6,8 +6,8 @@
 
 typedef enum {statement_k, expression_k, declaration_k} NodeKind;
 typedef enum {if_k, while_k, return_k, break_k, continue_k, expression_statement_k} StatementKind;
-typedef enum {op_k, constant_k, id_k, type_k} ExpressionKind;
-typedef enum {var_k, fun_k} DeclarationKind;
+typedef enum {op_k, constant_k, id_k, type_k, arr_k, ativ_k, assign_k, parametro_exp_t} ExpressionKind;
+typedef enum {var_k, fun_k, param_k, unknown_k} DeclarationKind;
 
 typedef struct no
 {
@@ -88,27 +88,57 @@ void free_tree(No *tree){
 void print_node(FILE *file, No *node){
     if (node == NULL){return;}
     char *kind_node;
-    int kind_union;
+    char *kind_union_str = ""; // String para armazenar o tipo específico
 
     switch (node->kind_node){
         case statement_k:
             kind_node = "statement";
-            kind_union = node->kind_union.stmt;
+            // Determina o tipo específico de statement
+            switch(node->kind_union.stmt) {
+                case if_k: kind_union_str = "if"; break;
+                case while_k: kind_union_str = "while"; break;
+                case return_k: kind_union_str = "return"; break;
+                case break_k: kind_union_str = "break"; break;
+                case continue_k: kind_union_str = "continue"; break;
+                case expression_statement_k: kind_union_str = "expression_statement"; break;
+                default: kind_union_str = "unknown_statement"; break;
+            }
             break;
         case expression_k:
             kind_node = "expression";
-            kind_union = node->kind_union.expr;
+            // Determina o tipo específico de expression
+            switch(node->kind_union.expr) {
+                case op_k: kind_union_str = "op"; break;
+                case constant_k: kind_union_str = "constant"; break;
+                case id_k: kind_union_str = "id"; break;
+                case type_k: kind_union_str = "type"; break;
+                case arr_k: kind_union_str = "array"; break;
+                case ativ_k: kind_union_str = "activation"; break;
+                case assign_k: kind_union_str = "assign"; break;
+                case parametro_exp_t: kind_union_str = "parameter_expression"; break;
+                default: kind_union_str = "unknown_expression"; break;
+            }
             break;
         case declaration_k:
             kind_node = "declaration";
-            kind_union = node->kind_union.decl;
+            // Determina o tipo específico de declaration
+            switch(node->kind_union.decl) {
+                case var_k: kind_union_str = "variable"; break;
+                case fun_k: kind_union_str = "function"; break;
+                case param_k: kind_union_str = "parameter"; break;
+                case unknown_k: kind_union_str = "unknown"; break;
+                default: kind_union_str = "unknown_declaration"; break;
+            }
             break;
         default:
             kind_node = "unknown";
-            kind_union = -1;
+            kind_union_str = "unknown";
             break;
     }
-    fprintf(file, "Linha: %d, Lexema: %s, Tipo: %s, Tipo_Union: %d", node->linha, node->lexmema, kind_node, kind_union);
+
+    fprintf(file, "Linha: %d, Lexema: %s, Tipo: %s, Tipo_Union: %s", 
+            node->linha, node->lexmema, kind_node, kind_union_str);
+            
     if (node->pai != NULL){
         fprintf(file, ", Pai: %s", node->pai->lexmema);
     }
