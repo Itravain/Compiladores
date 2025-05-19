@@ -399,7 +399,10 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     }
                     
                     break;
-
+                
+                case array_k:
+                    
+                break;
                 default:
                     result_str = NULL;
                     break;

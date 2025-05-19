@@ -84,9 +84,9 @@ var_declaracao:
     | tipo_especificador id T_LBRACKET num T_RBRACKET T_SEMICOLON {
         $$ = $1;
         $$->kind_node = declaration_k;
-        $$->kind_union.decl = (DeclarationKind)arr_k;
+        $$->kind_union.decl = (DeclarationKind)array_k;
         $$->linha = yylinenum;
-        YYSTYPE aux1 = create_node(yylinenum, heapNameLexeme, declaration_k, arr_k);
+        YYSTYPE aux1 = create_node(yylinenum, heapNameLexeme, declaration_k, array_k);
         add_filho($$, aux1);
         char heapNumberLexemeStr[10];
         sprintf(heapNumberLexemeStr, "%d", heapNumberLexeme);
@@ -156,7 +156,7 @@ param:
       }
     | tipo_especificador T_ID T_LBRACKET T_RBRACKET {
         $$ = $1;
-        YYSTYPE aux = create_node(yylinenum, id_lexema, declaration_k, arr_k);
+        YYSTYPE aux = create_node(yylinenum, id_lexema, declaration_k, array_k);
         add_filho($$, aux);
     }
 ;

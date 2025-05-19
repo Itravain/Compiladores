@@ -1,30 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "../globals.h"
 #define NUMMAXFILHOS 3
 #define MAXLEXEME 25
-
-typedef enum {statement_k, expression_k, declaration_k} NodeKind;
-typedef enum {if_k, while_k, return_k, break_k, continue_k, expression_statement_k} StatementKind;
-typedef enum {op_k, constant_k, id_k, type_k, arr_k, ativ_k, assign_k, parametro_exp_t} ExpressionKind;
-typedef enum {var_k, fun_k, param_k, unknown_k} DeclarationKind;
-
-typedef struct no
-{
-    int linha;
-    char lexmema[MAXLEXEME];
-    int max_index;
-    NodeKind kind_node;
-    union {
-        StatementKind stmt;
-        ExpressionKind expr;
-        DeclarationKind decl;
-    } kind_union;
-    struct no *pai;
-    struct no *filho[NUMMAXFILHOS];
-    struct no *irmao;
-    struct no *prev_irmao;
-} No;
 
 No * create_node(int linha, const char *lexmema, NodeKind kind, int kind_union){
     No *node = malloc(sizeof(No));
@@ -88,12 +67,11 @@ void free_tree(No *tree){
 void print_node(FILE *file, No *node){
     if (node == NULL){return;}
     char *kind_node;
-    char *kind_union_str = ""; // String para armazenar o tipo específico
+    char *kind_union_str = "";
 
     switch (node->kind_node){
         case statement_k:
             kind_node = "statement";
-            // Determina o tipo específico de statement
             switch(node->kind_union.stmt) {
                 case if_k: kind_union_str = "if"; break;
                 case while_k: kind_union_str = "while"; break;
@@ -106,7 +84,6 @@ void print_node(FILE *file, No *node){
             break;
         case expression_k:
             kind_node = "expression";
-            // Determina o tipo específico de expression
             switch(node->kind_union.expr) {
                 case op_k: kind_union_str = "op"; break;
                 case constant_k: kind_union_str = "constant"; break;
@@ -121,11 +98,11 @@ void print_node(FILE *file, No *node){
             break;
         case declaration_k:
             kind_node = "declaration";
-            // Determina o tipo específico de declaration
             switch(node->kind_union.decl) {
                 case var_k: kind_union_str = "variable"; break;
                 case fun_k: kind_union_str = "function"; break;
                 case param_k: kind_union_str = "parameter"; break;
+                case array_k: kind_union_str = "array"; break;
                 case unknown_k: kind_union_str = "unknown"; break;
                 default: kind_union_str = "unknown_declaration"; break;
             }

@@ -9,7 +9,7 @@
 typedef enum {statement_k, expression_k, declaration_k} NodeKind;
 typedef enum {if_k, while_k, return_k, break_k, continue_k, expression_statement_k} StatementKind;
 typedef enum {op_k, constant_k, id_k, type_k, arr_k, ativ_k, assign_k, parametro_exp_t} ExpressionKind;
-typedef enum {var_k, fun_k, param_k, unknown_k} DeclarationKind;
+typedef enum {var_k, fun_k, param_k, array_k, unknown_k} DeclarationKind;
 
 typedef struct no
 {
@@ -26,7 +26,7 @@ typedef struct no
     struct no *filho[NUMMAXFILHOS];
     struct no *irmao;
     struct no *prev_irmao;
-} No; // Nó da árvore de sintaxe abstrata
+} No;
 
 No * create_node(int linha, const char *lexmema, NodeKind kind, int kind_union);
 No * create_tree(int linha, const char *lexmema, NodeKind kind, int kind_union);
