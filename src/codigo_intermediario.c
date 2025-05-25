@@ -355,6 +355,23 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     result_str = NULL;
                     break;
                 }
+                case array_k: {
+                    char *index_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr,0);
+                    if (index_res) {
+                        result_str = gerar_temporario();
+                        if (!result_str) { 
+                            fprintf(stderr, "Erro [array_k]: Falha ao gerar variável temporária para o array '%s'. Possível falta de memória.\n", node_tree->lexmema);
+                            free(index_res); 
+                            return NULL; 
+                        }
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, LOAD, result_str, node_tree->lexmema, index_res);
+                        free(index_res);
+                    } else {
+                        fprintf(stderr, "Erro [array_k]: O índice do array na linha %d não produziu um resultado válido. Verifique a expressão.\n", node_tree->linha);
+                        result_str = NULL;
+                    }
+                    break;
+                }
                 default:
                     result_str = NULL;
                     break;

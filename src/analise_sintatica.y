@@ -250,8 +250,6 @@ var:
         $$ = $1;
         $$->kind_node = expression_k;
         $$->kind_union.expr = (ExpressionKind)arr_k;
-        $3->kind_node = expression_k;
-        $3->kind_union.expr = (ExpressionKind)var_k;
         add_filho($$, $3);
         }
 ;
