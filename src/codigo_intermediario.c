@@ -316,6 +316,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
 
                     if (rhs_res && lhs_name) {
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, ASSIGN, rhs_res, "", lhs_name);
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, STORE, node_tree->filho[0]->lexmema, lhs_name, "");
                         result_str = strdup(lhs_name);
                         if (strcmp(node_tree->filho[1]->lexmema, "input")==0){
                             *tac_list_ptr = criarNoTac(*tac_list_ptr, STORE, lhs_name, "", node_tree->filho[0]->lexmema);
@@ -366,7 +367,18 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
             switch (node_tree->kind_union.decl) {
                 case fun_k:
                     if(strcmp(node_tree->lexmema, "int") !=0 && strcmp(node_tree->lexmema, "void") != 0){
-                        *tac_list_ptr = criarNoTac(*tac_list_ptr, FUN, node_tree->pai->lexmema, node_tree->lexmema, "");
+                        int contador_filhos = 0;
+                        No *auxiliar = node_tree->filho[0];
+                        while (auxiliar != NULL)
+                        {
+                            contador_filhos++;
+                            auxiliar = auxiliar->irmao;
+                        }
+                        //transformar contador_filhos em string
+                        char contador_filhos_str[10];
+                        sprintf(contador_filhos_str, "%d", contador_filhos);
+                        
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, FUN, node_tree->pai->lexmema, node_tree->lexmema, contador_filhos_str);
                         strncpy(escopo, node_tree->lexmema, MAXLEXEME);
                     }
                     for (int i = 0; i < NUMMAXFILHOS; i++) {
@@ -401,7 +413,15 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     break;
                 
                 case array_k:
-                    
+                if (strcmp(node_tree->lexmema, "int") != 0 && strcmp(node_tree->lexmema, "void") != 0) {
+                    if (node_tree->filho[0] != NULL) {
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, ALLOC, node_tree->lexmema, escopo, node_tree->filho[0]->lexmema);
+                        result_str = NULL;
+                    } else {
+                        fprintf(stderr, "Erro [array_k]: Nó do tamanho do array (filho[0]) é NULL para o array '%s' na linha %d.\n", node_tree->lexmema, node_tree->linha);
+                        result_str = NULL;
+                    }
+                }
                 break;
                 default:
                     result_str = NULL;

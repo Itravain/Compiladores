@@ -82,17 +82,15 @@ var_declaracao:
         add_filho($$, aux);        
       }
     | tipo_especificador id T_LBRACKET num T_RBRACKET T_SEMICOLON {
-        $$ = $1;
-        $$->kind_node = declaration_k;
-        $$->kind_union.decl = (DeclarationKind)array_k;
-        $$->linha = yylinenum;
-        YYSTYPE aux1 = create_node(yylinenum, heapNameLexeme, declaration_k, array_k);
-        add_filho($$, aux1);
+        $$ = $1; 
+        YYSTYPE node_array_name = create_node(yylinenum, heapNameLexeme, declaration_k, array_k);
+        add_filho($$, node_array_name);
+
         char heapNumberLexemeStr[10];
         sprintf(heapNumberLexemeStr, "%d", heapNumberLexeme);
-        YYSTYPE aux2 = create_node(yylinenum, heapNumberLexemeStr, declaration_k, constant_k);
-        aux2->max_index = heapNumberLexeme;
-        add_filho($$, aux2);
+        YYSTYPE node_array_size = create_node(yylinenum, heapNumberLexemeStr, expression_k, constant_k);
+        node_array_size->max_index = heapNumberLexeme;
+        add_filho(node_array_name, node_array_size);
     }
 ;
 
@@ -156,7 +154,7 @@ param:
       }
     | tipo_especificador T_ID T_LBRACKET T_RBRACKET {
         $$ = $1;
-        YYSTYPE aux = create_node(yylinenum, id_lexema, declaration_k, array_k);
+        YYSTYPE aux = create_node(yylinenum, id_lexema, declaration_k, param_k);
         add_filho($$, aux);
     }
 ;

@@ -1,5 +1,19 @@
-void ribamar(int a) {
-    int b;
-    b = 4;
-    return;
+int vet[5];
+
+int minloc ( int a[], int low, int high )
+{	
+	int i;
+	int x;
+	int k;
+	k = low;
+	x = a[low];
+	i = low + 1;
+	while (i < high){
+		if (a[i] < x){
+			x = a[i];
+			k = i;
+		}
+		i = i + 1;
+	}
+	return k;
 }
