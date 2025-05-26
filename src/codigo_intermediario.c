@@ -358,13 +358,17 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
 
                     tmp = gerar_temporario();
                     *tac_list_ptr = criarNoTac(*tac_list_ptr, CALL, tmp, node_tree->lexmema, params_str);
-                    return tmp;
+                    
+                    if(node_tree->irmao == NULL){
+                        return tmp;
+                    }
                     free(tmp);
                     result_str = NULL;
                     break;
                 }
                 case arr_k: {
                     char *index_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr,0);
+                    
                     if (index_res) {
                         result_str = gerar_temporario();
                         if (!result_str) { 
@@ -373,6 +377,9 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                             return NULL; 
                         }
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, LOAD, result_str, node_tree->lexmema, index_res);
+                        if (expression_parametro){
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, result_str, "", "");
+                        }
                         free(index_res);
                     } else {
                         fprintf(stderr, "Erro [array_k]: O índice do array na linha %d não produziu um resultado válido. Verifique a expressão.\n", node_tree->linha);
@@ -414,9 +421,6 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     }
                     if(strcmp(node_tree->lexmema, "int") !=0 && strcmp(node_tree->lexmema, "void") != 0){
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, END, node_tree->lexmema, "", "");
-                    }
-                    if (strcmp(node_tree->lexmema, "main") == 0){
-                      *tac_list_ptr = criarNoTac(*tac_list_ptr, HALT, "", "", "");  
                     }
                     
                     result_str = NULL;
@@ -460,9 +464,15 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
             break;
     }
 
-    if (node_tree->irmao) {
-        char *sibling_res = percorrer_arvore(node_tree->irmao, tac_list_ptr, 1);
-        free(sibling_res);
+    if(node_tree->irmao) {
+        if(expression_parametro){
+            char *sibling_res = percorrer_arvore(node_tree->irmao, tac_list_ptr, 1);
+            free(sibling_res);
+        }
+        else{
+            char *sibling_res = percorrer_arvore(node_tree->irmao, tac_list_ptr, 0);
+            free(sibling_res);
+        }
     }
 
     return result_str;

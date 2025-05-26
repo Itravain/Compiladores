@@ -30,6 +30,7 @@ int main(int argc, char **argv) {
         //código intermediário
         tac = criarTac(tac);
         percorrer_arvore(raizArvore, &tac, 0);
+        tac = criarNoTac(tac, HALT, "", "", "");
         imprimirTac(codInterm, tac);
         liberarTac(tac);
 
