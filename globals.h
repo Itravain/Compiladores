@@ -80,9 +80,9 @@ enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, IFF, RET, GOTO, LAB, PARAM
 
 typedef struct tacNo{
     enum operacoes operacao;
+    char resultado[20];
     char op1[20];
     char op2[20];
-    char resultado[20];
     struct tacNo *proximo;
 } TacNo;
 

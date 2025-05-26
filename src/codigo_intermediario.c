@@ -178,7 +178,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     char *cond_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 0);
                     if (cond_res) {
         
-                        *tac_list_ptr = criarNoTac(*tac_list_ptr, IFF, cond_res, "", label_fim_if);
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, IFF, cond_res, label_fim_if, "");
                         free(cond_res);
                     } else {
                         fprintf(stderr, "Erro [if_k]: A condição do IF na linha %d não produziu um resultado válido. Verifique a expressão.\n", node_tree->linha);
@@ -204,7 +204,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
 
                     char *cond_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr,0);
                     if (cond_res) {
-                        *tac_list_ptr = criarNoTac(*tac_list_ptr, IFF, cond_res, "", label_end);
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, IFF, cond_res, label_end, "");
                         free(cond_res);
                     } else {
                         fprintf(stderr, "Erro [while_k]: A condição do WHILE na linha %d não produziu um resultado válido. Verifique a expressão.\n", node_tree->linha);
@@ -212,7 +212,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
 
                     res_child = percorrer_arvore(node_tree->filho[1], tac_list_ptr,0);
                     free(res_child);
-                    *tac_list_ptr = criarNoTac(*tac_list_ptr, GOTO, "", "", label_start);
+                    *tac_list_ptr = criarNoTac(*tac_list_ptr, GOTO, label_start, "", "");
 
                     *tac_list_ptr = criarNoTac(*tac_list_ptr, LAB, label_end, "", "");
                     free(label_start);
@@ -286,6 +286,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     free(res2);
                     break;
                 }
+                // Ambos possuem a mesma lógica, por isso estão juntos.
                 case constant_k:
                 case id_k: {
                     char *tmp = gerar_temporario();
@@ -309,11 +310,11 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     char *rhs_res = percorrer_arvore(node_tree->filho[1], tac_list_ptr,0);
 
                     if (rhs_res && lhs_name) {
-                        *tac_list_ptr = criarNoTac(*tac_list_ptr, ASSIGN, rhs_res, "", lhs_name);
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, ASSIGN, lhs_name, rhs_res, "");
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, STORE, node_tree->filho[0]->lexmema, lhs_name, "");
                         result_str = strdup(lhs_name);
                         if (strcmp(node_tree->filho[1]->lexmema, "input")==0){
-                            *tac_list_ptr = criarNoTac(*tac_list_ptr, STORE, lhs_name, "", node_tree->filho[0]->lexmema);
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, STORE, node_tree->filho[0]->lexmema, lhs_name, "");
                         }
                         
                     } else {
