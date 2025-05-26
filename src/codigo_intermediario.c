@@ -167,16 +167,18 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
             char *res_child = NULL;
             switch (node_tree->kind_union.stmt) {
                 case if_k: {
-                    char *label_else = gerar_label();
-                    char *label_end = gerar_label();
-                    if (!label_else || !label_end) { 
-                        fprintf(stderr, "Erro [if_k]: Falha na geração de rótulos para o comando IF. Possível falta de memória.\n");
+                    // Label para o final da instrução IF (para onde pular se a condição for falsa)
+                    char *label_fim_if = gerar_label();
+                    
+                    if (!label_fim_if) { 
+                        fprintf(stderr, "Erro [if_k]: Falha na geração de rótulo para o comando IF. Possível falta de memória.\n");
                         return NULL; 
                     }
 
                     char *cond_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 0);
                     if (cond_res) {
-                        *tac_list_ptr = criarNoTac(*tac_list_ptr, IFF, cond_res, "", label_else);
+        
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, IFF, cond_res, "", label_fim_if);
                         free(cond_res);
                     } else {
                         fprintf(stderr, "Erro [if_k]: A condição do IF na linha %d não produziu um resultado válido. Verifique a expressão.\n", node_tree->linha);
@@ -184,17 +186,9 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
 
                     res_child = percorrer_arvore(node_tree->filho[1], tac_list_ptr, 0);
                     free(res_child);
-                    *tac_list_ptr = criarNoTac(*tac_list_ptr, GOTO, "", "", label_end);
-
-                    *tac_list_ptr = criarNoTac(*tac_list_ptr, LAB, label_else, "", "");
-                    if (node_tree->filho[2]) {
-                        res_child = percorrer_arvore(node_tree->filho[2], tac_list_ptr, 0);
-                        free(res_child);
-                    }
-
-                    *tac_list_ptr = criarNoTac(*tac_list_ptr, LAB, label_end, "", "");
-                    free(label_else);
-                    free(label_end);
+                    *tac_list_ptr = criarNoTac(*tac_list_ptr, LAB, label_fim_if, "", "");
+                    
+                    free(label_fim_if);
                     result_str = NULL;
                     break;
                 }
@@ -355,7 +349,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     result_str = NULL;
                     break;
                 }
-                case array_k: {
+                case arr_k: {
                     char *index_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr,0);
                     if (index_res) {
                         result_str = gerar_temporario();
