@@ -10,7 +10,7 @@
 #define YYSTYPE No*
 
 int yylex(void);
-int yyerror(char *);
+void yyerror(char *);
 extern char *yytext;
 extern int yylinenum;
 
@@ -18,6 +18,8 @@ No* raizArvore = NULL;
 char heapNameLexeme[MAXLEXEME];
 int heapLinenum;
 int heapNumberLexeme;
+
+int numeroDeErrosSintaticos = 0; // Contador de erros
 %}
 %debug
 
@@ -39,24 +41,40 @@ int heapNumberLexeme;
 %%
 
 programa:
-    declaracao_lista { raizArvore = $1; }
+    declaracao_lista {
+        raizArvore = $1;
+        if (numeroDeErrosSintaticos > 0) {
+          fprintf(stdout, "Análise sintática concluída com %d erro(s).\n", numeroDeErrosSintaticos);
+        } else {
+          fprintf(stdout, "Análise sintática concluída com sucesso.\n");
+        }
+    }
 ;
 
 declaracao_lista:
       declaracao_lista declaracao {
-        if ($$ != NULL) {
+        if ($1 != NULL) {
             $$ = $1;
-            add_irmao($$, $2);
+            if($2 != NULL) add_irmao($$, $2); // Adiciona irmão apenas se $2 não for um erro recuperado como NULL
         } else {
             $$ = $2;
         }
     }
     | declaracao { $$ = $1; }
+    | declaracao_lista error {
+        yyerrok;
+        $$ = $1;
+    }
 ;
 
 declaracao:
       var_declaracao { $$ = $1; }
     | fun_declaracao { $$ = $1; }
+    | tipo_especificador error T_SEMICOLON { // Ex: int x y z; (faltou vírgula)
+        yyerror("Declaração malformada, recuperando no ';'."); // Mensagem adicional opcional
+        yyerrok;
+        $$ = NULL;
+    }
 ;
 
 id:
@@ -163,19 +181,30 @@ composto_decl:
       T_LBRACE local_declaracoes statement_lista T_RBRACE {
         if ($2 != NULL) {
             $$ = $2;
-            add_irmao($$, $3);
+            if ($3 != NULL) add_irmao($$, $3);
         } else { $$ = $3; }
       }
+    // Regra de recuperação: erro dentro de um bloco, sincroniza no '}'
+    | T_LBRACE error T_RBRACE {
+        yyerror("Erro dentro de bloco composto, recuperando no '}'.");
+        yyerrok;
+        $$ = NULL;
+    }
 ;
 
 local_declaracoes:
       local_declaracoes var_declaracao {
         if ($1 != NULL) {
             $$ = $1;
-            add_irmao($$, $2);
+            if ($2 != NULL) add_irmao($$, $2);
         } else { $$ = $2; }
       }
-    | /* vazio */ { $$ = NULL; }
+    |{ $$ = NULL; }
+    // Regra de recuperação para declarações locais
+    | local_declaracoes error {
+        yyerrok;
+        $$ = $1; // Mantém declarações locais válidas anteriores
+    }
 ;
 
 statement_lista:
@@ -183,8 +212,13 @@ statement_lista:
     | statement_lista statement {
         if ($1 != NULL) {
             $$ = $1;
-            add_irmao($$, $2);
+            if ($2 != NULL) add_irmao($$, $2);
         } else { $$ = $2; }
+    }
+    // Regra de recuperação para statements
+    | statement_lista error {
+        yyerrok;
+        $$ = $1; // Mantém statements válidos anteriores
     }
 ;
 
@@ -194,6 +228,12 @@ statement:
     | selecao_decl       { $$ = $1; }
     | iteracao_decl      { $$ = $1; }
     | retorno_decl       { $$ = $1; }
+    // Regra de recuperação: statement malformado, sincroniza com ';'
+    | error T_SEMICOLON {
+        yyerror("Statement malformado, recuperando no ';'.");
+        yyerrok;
+        $$ = NULL; // O statement é considerado inválido
+    }
 ;
 
 expressao_decl:
@@ -203,14 +243,12 @@ expressao_decl:
 selecao_decl:
       T_IF T_LPAREN expressao T_RPAREN statement %prec LOWER_THAN_ELSE {
           $$ = create_node(yylinenum, "if", statement_k, if_k);
-          /* If-statement: $3 e "then-statement": $5 */
           add_filho($$, $3);
           add_filho($$, $5);
       }
     | T_IF T_LPAREN expressao T_RPAREN statement T_ELSE statement {
         /* Cria no if-else */
-        $$ = create_node(yylinenum, "if-else", statement_k, if_k); /* A Gabi não criou if_else_k */
-        /* If-statement: $3, "then-statement": $5 e "else-statement": $7 */
+        $$ = create_node(yylinenum, "if-else", statement_k, if_k);
         add_filho($$, $3);
         add_filho($$, $5);
         add_filho($$, $7);
@@ -341,8 +379,10 @@ args_lista:
     }
 ;
 
-%%
+%% // Seção final do arquivo yacc
 
-int yyerror(char *msg) {
-    fprintf(stderr, "Erro de sintaxe na linha %d: Token inesperado: '%s'\n", yylinenum, yytext);
+// Definição de yyerror
+void yyerror(char *s) { // s é a string "syntax error" ou similar, passada pelo yacc/bison
+    fprintf(stderr, "Erro de sintaxe na linha %d perto de '%s': %s\n", yylinenum, yytext, s);
+    numeroDeErrosSintaticos++;
 }

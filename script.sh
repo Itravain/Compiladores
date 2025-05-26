@@ -13,4 +13,4 @@ if [ ! -d "outputs" ]; then
 fi
 
 # Run the compiled program
-./compiler < test_codes/very_basic_ok.c > outputs/output.txt 2>&1
+./compiler < test_codes/gcd_ok.c > outputs/output.txt 2>&1
