@@ -170,6 +170,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     char *label_else = gerar_label(); 
                     char *label_end = gerar_label();  
 
+                    //aviso de erro caso falhe a geração de rótulos
                     if (!label_else || !label_end) { 
                         fprintf(stderr, "Erro [if_k]: Falha na geração de rótulos para o comando IF. Possível falta de memória.\n");
                         free(label_else); 
@@ -178,6 +179,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     }
 
                     char *cond_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 0);
+                    //aviso de erro caso falhe a criação do nó TAC
                     if (cond_res) {
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, IFF, cond_res, label_else, "");
                         free(cond_res);
@@ -207,6 +209,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                 case while_k: {
                     char *label_start = gerar_label();
                     char *label_end = gerar_label();
+                    //erro caso falhe a geração de rótulos
                     if (!label_start || !label_end) { 
                         fprintf(stderr, "Erro [while_k]: Falha na geração de rótulos para o comando WHILE. Possível falta de memória.\n");
                         return NULL; 
