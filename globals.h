@@ -101,3 +101,6 @@ void imprimirTac(FILE *arqCodInterm, Tac *tac);
 // Função para percorrer a árvore e gerar TAC
 char* percorrer_arvore(No *node_tree, Tac **tac, int expression_parametro);
 void codigo_intermediario(No *node_tree, Tac *tac);
+
+//gerador código assembly
+void gerar_assembly(FILE *saida, Tac *lista_tac, HashTable *tabela_simbolos);
