@@ -35,9 +35,9 @@ void iterate_tree(No* root, HashTable* symbol_table) {
     if (strcmp(root->lexmema, "int") == 0 || strcmp(root->lexmema, "void") == 0) {
         Symbol* new_symbol;
         if (root->filho[0] != NULL){
-            new_symbol = create_symbol(root->filho[0]->lexmema, root->linha, root->kind_union.decl, root->lexmema, get_scope(root));
+            new_symbol = create_symbol(root->filho[0]->lexmema, root->linha, root->kind_union.decl, root->lexmema, get_scope(root), 0);
         } else {
-            new_symbol = create_symbol(root->lexmema, root->linha, root->kind_union.decl, root->lexmema, get_scope(root));
+            new_symbol = create_symbol(root->lexmema, root->linha, root->kind_union.decl, root->lexmema, get_scope(root), 1);
         }
         if (strcmp(new_symbol->name, "int") != 0 && strcmp(new_symbol->name, "void") != 0)
         {
@@ -66,7 +66,7 @@ void add_to_hash_table(Symbol* new_symbol, HashTable* symbol_table) {
 }
 
 
-Symbol* create_symbol(char* name, int linha, DeclarationKind id_type, char* type, char* scope) {
+Symbol* create_symbol(char* name, int linha, DeclarationKind id_type, char* type, char* scope, int size) {
     Symbol* new_symbol = malloc(sizeof(Symbol));
     new_symbol->hash_key = hash(scope, name);
     new_symbol->linha = linha;
@@ -74,6 +74,7 @@ Symbol* create_symbol(char* name, int linha, DeclarationKind id_type, char* type
     new_symbol->id_type = id_type;
     new_symbol->type = type;
     new_symbol->scope = scope;
+    new_symbol->size = size;
     new_symbol->next = NULL;
 
     return new_symbol;
@@ -109,7 +110,7 @@ void print_symbol_table(FILE* file, HashTable* symbol_table) {
     for (int i = 0; i < TABLE_SIZE; i++) {
         Symbol* current = symbol_table->table[i];
         while (current != NULL) {
-            fprintf(file, "Hash: %u Linha: %d, Name: %s, ID Type: %d, Type: %s, Scope: %s\n", current->hash_key, current->linha, current->name, current->id_type, current->type, current->scope);
+            fprintf(file, "Hash: %u Linha: %d, Name: %s, ID Type: %d, Type: %s, Scope: %s, Size: %d\n", current->hash_key, current->linha, current->name, current->id_type, current->type, current->scope, current->size);
             current = current->next;
         }
     }

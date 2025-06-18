@@ -32,8 +32,11 @@ int main(int argc, char **argv) {
         percorrer_arvore(raizArvore, &tac, 0);
         tac = criarNoTac(tac, HALT, "", "", "");
         imprimirTac(codInterm, tac);
+        
+        //Gerador de código assembly
+        FILE *assembly = fopen("outputs/assembly.asm", "w");
+        gerar_codigo_final(assembly, tac);
         liberarTac(tac);
-
     } else {
         exit(1);
     }

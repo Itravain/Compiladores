@@ -1,3 +1,4 @@
+int c[2];
 void main(void)
 {
    int x; int y;

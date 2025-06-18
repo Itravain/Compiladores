@@ -46,6 +46,7 @@ typedef struct Symbol {
     DeclarationKind id_type;
     char *type;
     char *scope;
+    int size;
     struct Symbol *next;
 } Symbol;
 
@@ -65,7 +66,7 @@ HashTable* create_table();
 unsigned int hash(char *scope, char *name);
 void iterate_tree(No* root, HashTable* symbol_table);
 void add_to_hash_table(Symbol* symbol, HashTable* symbol_table);
-Symbol* create_symbol(char* name, int linha, DeclarationKind id_type, char* type, char* scope);
+Symbol* create_symbol(char* name, int linha, DeclarationKind id_type, char* type, char* scope, int size);
 char* get_scope(No* root);
 void print_symbol_table(FILE *file, HashTable* symbol_table);
 Symbol* find_symbol(HashTable* symbol_table, char* name, char* scope);
@@ -76,6 +77,7 @@ void check_main_function();
 int count_symbol(char* name, char* scope, HashTable* symbol_table);
 
 //Código intermediário
+//
 enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN};
 
 typedef struct tacNo{
@@ -104,3 +106,11 @@ void codigo_intermediario(No *node_tree, Tac *tac);
 
 //gerador código assembly
 void gerar_assembly(FILE *saida, Tac *lista_tac, HashTable *tabela_simbolos);
+
+
+// Gerador de código assembly
+//
+void gerar_assembly(FILE *saida, Tac *lista_tac, HashTable *tabela_simbolos);
+void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac);
+void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac);
+char* get_reg(const char *temp_name);
