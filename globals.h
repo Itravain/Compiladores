@@ -82,6 +82,7 @@ void calcular_layout_de_pilha(HashTable* symbol_table);
 void semantic_analysis(No* root, HashTable* symbol_table);
 void check_main_function();
 int count_symbol(char* name, char* scope, HashTable* symbol_table);
+void free_table(HashTable* table);
 
 //Código intermediário
 //

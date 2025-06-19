@@ -14,9 +14,6 @@ HashTable* create_table() {
     return ht;
 }
 
-
-
-
 // hash
 unsigned int hash(char *scope, char *name) {
     char key[200];  // Buffer to store "scope+name"
@@ -67,36 +64,60 @@ void iterate_tree(No* root, HashTable* symbol_table) {
         return;
     }
     
-    if (strcmp(root->lexmema, "int") == 0 || strcmp(root->lexmema, "void") == 0) {
-        Symbol* new_symbol;
-        if (root->filho[0] != NULL){
-            if(root->filho[0]->kind_union.decl == array_k){
-                // array 
-                new_symbol = create_symbol(root->filho[0]->lexmema, root->linha, root->filho[0]->kind_union.decl, root->lexmema, get_scope(root), atoi(root->filho[0]->filho[0]->lexmema), atualizar_offset(get_scope(root), atoi(root->filho[0]->filho[0]->lexmema)));
-            }
-            else{
-                
-                //variavel simples
-                new_symbol = create_symbol(root->filho[0]->lexmema, root->linha, root->filho[0]->kind_union.decl, root->lexmema, get_scope(root), 1, atualizar_offset(get_scope(root), 1));
-            }
-        } else {
-            // declaração de função
-            new_symbol = create_symbol(root->lexmema, root->linha, root->kind_union.decl, root->lexmema, get_scope(root), 1, 0);
-        }
-        if (strcmp(new_symbol->name, "int") != 0 && strcmp(new_symbol->name, "void") != 0)
-        {
-            add_to_hash_table(new_symbol, symbol_table);
-        }
-        else{
-            free(new_symbol);
-        }
+    // CONDIÇÃO CORRIGIDA:
+    // Processa apenas os nós que iniciam uma declaração (os nós de tipo).
+    if (root->kind_node == declaration_k && (strcmp(root->lexmema, "int") == 0 || strcmp(root->lexmema, "void") == 0)) {
+        Symbol* new_symbol = NULL;
         
+        // O nó de declaração de tipo (int/void) é o pai.
+        // As informações do símbolo (nome, tipo de decl) estão no filho.
+        if (root->filho[0] != NULL) {
+            No* symbol_node = root->filho[0];
+            DeclarationKind decl_kind = symbol_node->kind_union.decl;
+            char* scope = get_scope(root); // O escopo é determinado pelo pai da declaração
+
+            switch (decl_kind) {
+                case var_k:
+                    // Variável simples: int x;
+                    new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, 1, atualizar_offset(scope, 1));
+                    break;
+
+                case array_k:
+                    // Declaração de array: int a[10];
+                    if (symbol_node->filho[0] != NULL) {
+                        int size = atoi(symbol_node->filho[0]->lexmema);
+                        new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, size, atualizar_offset(scope, size));
+                    }
+                    break;
+
+                case fun_k:
+                    // Declaração de função: int main(...)
+                    // O escopo de uma função é sempre GLOBAL
+                    new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, "GLOBAL", 0, 0);
+                    break;
+
+                case param_k:
+                    // Parâmetro de função: int x
+                    new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, 1, atualizar_offset(scope, 1));
+                    break;
+                
+                default:
+                    // Tipo de declaração desconhecido ou não aplicável
+                    break;
+            }
+
+            // Adiciona o símbolo à tabela se ele foi criado
+            if (new_symbol != NULL) {
+                add_to_hash_table(new_symbol, symbol_table);
+            }
+            free(scope); // Libera a memória alocada por get_scope
+        }
     }
 
+    // Continua a travessia recursiva para todos os filhos e irmãos
     for (int i = 0; i < NUMMAXFILHOS; i++) {
         iterate_tree(root->filho[i], symbol_table);
     }
-
     iterate_tree(root->irmao, symbol_table);
 }
 
@@ -184,6 +205,27 @@ void print_symbol_table(FILE* file, HashTable* symbol_table) {
     }
 }
 
+void free_table(HashTable* symbol_table) {
+    if (symbol_table == NULL) return;
+
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        Symbol* current = symbol_table->table[i];
+        while (current != NULL) {
+            Symbol* to_free = current;
+            current = current->next;
+
+            // Libera as strings alocadas com strdup
+            free(to_free->name);
+            free(to_free->type);
+            free(to_free->scope);
+            // Libera o próprio nó do símbolo
+            free(to_free);
+        }
+    }
+    // Libera a estrutura da tabela
+    free(symbol_table);
+}
+
 Symbol* find_symbol(HashTable* symbol_table, char* name, char* scope) {
     unsigned int hash_key = hash(scope, name);
     unsigned int index = hash_key % TABLE_SIZE;
@@ -213,18 +255,4 @@ int count_symbol(char* name, char* scope, HashTable* symbol_table) {
     }
     
     return count;
-}
-
-
-void calcular_layout_de_pilha(HashTable* tabela_simbolos) {
-    
-
-    for (int i = 0; i < TABLE_SIZE; i++) {
-        Symbol* simbolo = tabela_simbolos->table[i];
-        while (simbolo != NULL) {
-            printf("Simbolo atual: %s, Escopo: %s, Tipo: %d, Tamanho: %d\n", simbolo->name, simbolo->scope, simbolo->id_type, simbolo->size);
-            simbolo->offset = 1; // Inicializa o offset para cada símbolo
-            simbolo = simbolo->next;
-        }
-    }
 }

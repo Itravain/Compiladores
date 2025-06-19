@@ -1,7 +1,4 @@
 int vet[5];
-int xambeto;
-int asdf[4];
-
 
 int minloc( int a[], int low, int high )
 {	

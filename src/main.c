@@ -37,10 +37,11 @@ int main(int argc, char **argv) {
         FILE *assembly = fopen("outputs/assembly.asm", "w");
         gerar_codigo_final(assembly, tac, hashTable);
         liberarTac(tac);
+        free_table(hashTable);
+        free_tree(raizArvore);
     } else {
         exit(1);
     }
-
     return 0;
 }
 
@@ -96,25 +97,26 @@ int main(int argc, char **argv) {
         
 //         // A chamada para calcular_layout_de_pilha está faltando aqui,
 //         // mas o segmentation fault ocorre nela, então vamos adicioná-la para depuração.
-//         printf("Calculando layout de pilha...\n");
-//         calcular_layout_de_pilha(hashTable);
-//         printf("Layout de pilha calculado.\n");
 
 //         print_symbol_table(tabsimb, hashTable);
     
 //         // semantic_analysis(raizArvore, hashTable);
 //         // check_main_function();
 
-//         // //código intermediário
-//         // Tac *tac = criarTac(NULL);
-//         // percorrer_arvore(raizArvore, &tac, 0);
-//         // tac = criarNoTac(tac, HALT, "", "", "");
-//         // imprimirTac(codInterm, tac);
+//         //código intermediário
+//         Tac *tac = criarTac(NULL);
+//         percorrer_arvore(raizArvore, &tac, 0);
+//         tac = criarNoTac(tac, HALT, "", "", "");
+//         imprimirTac(codInterm, tac);
         
-//         // //Gerador de código assembly
-//         // FILE *assembly = fopen("outputs/assembly.asm", "w");
-//         // gerar_codigo_final(assembly, tac, hashTable);
-//         // liberarTac(tac);
+//         //Gerador de código assembly
+//         FILE *assembly = fopen("outputs/assembly.asm", "w");
+//         gerar_codigo_final(assembly, tac, hashTable);
+//         liberarTac(tac);
+//         // Libera a memória da árvore sintática
+//         free_table(hashTable);
+//         free_tree(raizArvore);
+
 //     } else {
 //         fprintf(stderr, "Análise sintática falhou.\n");
 //         exit(1);
@@ -125,6 +127,7 @@ int main(int argc, char **argv) {
 //     if (tabsimb) fclose(tabsimb);
 //     if (codInterm) fclose(codInterm);
 //     fclose(inputFile); // Não se esqueça de fechar o arquivo de entrada!
+
 
 //     return 0;
 // }

@@ -63,27 +63,39 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             // Verifica se a variável (tac->op1) é global
             Symbol* simbolo = find_symbol(tabela_simbolos, tac->op2, "GLOBAL");
             if (simbolo != NULL) {
-                fprintf(arquivoSaida, "    ; Acessando variável global '%s'\n", tac->op2);
-                // 1. Carrega o endereço da variável em um registrador auxiliar (R15)
-                fprintf(arquivoSaida, "    MOVI R26, #%s\n", simbolo->offset);
-                // 2. Carrega o VALOR a partir do endereço em R26 para o registrador de destino
-                fprintf(arquivoSaida, "    LDR %s, [R26, #0]\n", reg_op1);
+                if (simbolo->id_type == var_k) {
+                    fprintf(arquivoSaida, "    ; Acessando variável global '%s'\n", tac->op2);
+                    // 1. Carrega o endereço da variável em um registrador auxiliar (R27)
+                    fprintf(arquivoSaida, "    MOVI R27, #%d\n", simbolo->offset);
+                    // 2. Carrega o VALOR a partir do endereço em R27 para o registrador de destino
+                    fprintf(arquivoSaida, "    LDR %s, [R27, #0]\n", reg_op1);
+                }
+                else if (simbolo->id_type == array_k) {
+                    fprintf(arquivoSaida, "    ; Acessando array global '%s'\n", tac->op2);
+                    // 1. Carrega o endereço da variável em um registrador auxiliar (R27)
+                    fprintf(arquivoSaida, "    MOVI R27, #%d\n", simbolo->offset);
+                    fprintf(arquivoSaida, "    ADD R27, %s, %s\n", reg_op1, reg_res);
+                    // 2. Carrega o VALOR a partir do endereço em R27 para o registrador de destino
+                    fprintf(arquivoSaida, "    LDR %s, [R27, #0]\n", reg_op1);
+                }    
             } else {
-                // Lógica para variáveis locais virá no Passo 4.B
-                fprintf(arquivoSaida, "    ; TODO: LOAD para variável local '%s'\n", tac->op1);
+                //Caso seja carregado um imediato;
+                if (atoi(tac->op2)) {
+                    fprintf(arquivoSaida, "    MOVI %s, #%s\n", reg_op1, tac->op2);
+                }
+                
             }
             break;
         }
 
         case STORE: {
-            // A variável de destino está em tac->resultado
-            Symbol* simbolo = find_symbol(tabela_simbolos, tac->resultado, "GLOBAL");
+            Symbol* simbolo = find_symbol(tabela_simbolos, tac->op1, "GLOBAL");
             if (simbolo != NULL) { // É global
                 fprintf(arquivoSaida, "    ; Armazenando em variável global '%s'\n", tac->resultado);
-                // 1. Carrega o endereço da variável em R15
-                fprintf(arquivoSaida, "    MOVI R15, #%s\n", tac->resultado);
+                // 1. Carrega o endereço da variável em R27
+                fprintf(arquivoSaida, "    MOVI R27, #%d\n", simbolo->offset);
                 // 2. Armazena o VALOR do registrador de origem (reg_op1) no endereço em R15
-                fprintf(arquivoSaida, "    STR %s, [R15, #0]\n", reg_op1); //
+                fprintf(arquivoSaida, "    STR %s, [R27, #0]\n", reg_op2); //
             } else {
                 fprintf(arquivoSaida, "    ; TODO: STORE para variável local '%s'\n", tac->resultado);
             }
@@ -100,12 +112,12 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             break;
         case CALL: {
             if (strcmp(tac->op2, "input") == 0)  {
-                fprintf(arquivoSaida, "IN\n");
-                fprintf(arquivoSaida, "MOV %s, R27\n", get_reg(tac->op1));
+                fprintf(arquivoSaida, "    IN\n");
+                fprintf(arquivoSaida, "    MOV %s, R28\n", get_reg(tac->op1));
 
             }
             if (strcmp(tac->op2, "output") == 0)  {
-                fprintf(arquivoSaida, "OUT\n");
+                fprintf(arquivoSaida, "    OUT\n");
             }
             
             break;
@@ -117,7 +129,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         case ALLOC:
             break;
         case ASSIGN: {
-            fprintf(arquivoSaida,"MOV %s, %s\n", get_reg(tac->op1), get_reg(tac->op2));
+            fprintf(arquivoSaida,"    MOV %s, %s\n", get_reg(tac->op1), get_reg(tac->op2));
             break;
         }
         case RET:
