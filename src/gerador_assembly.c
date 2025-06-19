@@ -18,7 +18,7 @@ char* get_reg(const char *temp_name) {
     return reg_name;
 }
 
-void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac) {
+void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabela_simbolos) {
     const char *op_nomes[] = {
         "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "IFF", "RET", "GOTO", "LAB",
         "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN"
@@ -59,25 +59,67 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac) {
             // (HALT, , , ) -> FINISH
             fprintf(arquivoSaida, "    FINISH\n"); //
             break;
-        case LOAD:
-            // Simplificação: assume que op1 é um label de memória
-            fprintf(arquivoSaida, "    ; TODO: Implementar endereçamento correto\n");
-            fprintf(arquivoSaida, "    LDR %s, [%s]\n", reg_res, tac->op1);
+        case LOAD: {
+            // Verifica se a variável (tac->op1) é global
+            Symbol* simbolo = find_symbol(tabela_simbolos, tac->op2, "GLOBAL");
+            if (simbolo != NULL) {
+                fprintf(arquivoSaida, "    ; Acessando variável global '%s'\n", tac->op2);
+                // 1. Carrega o endereço da variável em um registrador auxiliar (R15)
+                fprintf(arquivoSaida, "    MOVI R26, #%s\n", simbolo->offset);
+                // 2. Carrega o VALOR a partir do endereço em R26 para o registrador de destino
+                fprintf(arquivoSaida, "    LDR %s, [R26, #0]\n", reg_op1);
+            } else {
+                // Lógica para variáveis locais virá no Passo 4.B
+                fprintf(arquivoSaida, "    ; TODO: LOAD para variável local '%s'\n", tac->op1);
+            }
             break;
-        case STORE:
-            // Simplificação: assume que resultado é um label de memória
-            fprintf(arquivoSaida, "    ; TODO: Implementar endereçamento correto\n");
-            fprintf(arquivoSaida, "    STR %s, [%s]\n", reg_op1, tac->resultado);
+        }
+
+        case STORE: {
+            // A variável de destino está em tac->resultado
+            Symbol* simbolo = find_symbol(tabela_simbolos, tac->resultado, "GLOBAL");
+            if (simbolo != NULL) { // É global
+                fprintf(arquivoSaida, "    ; Armazenando em variável global '%s'\n", tac->resultado);
+                // 1. Carrega o endereço da variável em R15
+                fprintf(arquivoSaida, "    MOVI R15, #%s\n", tac->resultado);
+                // 2. Armazena o VALOR do registrador de origem (reg_op1) no endereço em R15
+                fprintf(arquivoSaida, "    STR %s, [R15, #0]\n", reg_op1); //
+            } else {
+                fprintf(arquivoSaida, "    ; TODO: STORE para variável local '%s'\n", tac->resultado);
+            }
             break;
+        }
         
-        case FUN:
+        case FUN: {
+            fprintf(arquivoSaida, ".%s\n", tac->op2);
+            break;
+        }
         case END:
+            break;
         case IFF:
-        case CALL:
+            break;
+        case CALL: {
+            if (strcmp(tac->op2, "input") == 0)  {
+                fprintf(arquivoSaida, "IN\n");
+                fprintf(arquivoSaida, "MOV %s, R27\n", get_reg(tac->op1));
+
+            }
+            if (strcmp(tac->op2, "output") == 0)  {
+                fprintf(arquivoSaida, "OUT\n");
+            }
+            
+            break;
+        } 
         case ARG:
+            break;
         case PARAM:
+            break;
         case ALLOC:
-        case ASSIGN:
+            break;
+        case ASSIGN: {
+            fprintf(arquivoSaida,"MOV %s, %s\n", get_reg(tac->op1), get_reg(tac->op2));
+            break;
+        }
         case RET:
             
             break;
@@ -92,7 +134,8 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac) {
     free(reg_op2);
 }
 
-void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac) {
+
+void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac, HashTable *tabela_simbolos) {
     if (!arquivoSaida) {
         fprintf(stderr, "Erro: Arquivo de saída para assembly é nulo.\n");
         return;
@@ -104,14 +147,33 @@ void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac) {
 
     // Escreve as diretivas iniciais do assembly.
     fprintf(arquivoSaida, "; Arquivo Assembly gerado pelo compilador C-\n");
-    fprintf(arquivoSaida, ".text\n");
-    fprintf(arquivoSaida, ".globl main\n\n");
+    
+    fprintf(arquivoSaida, "\n.data\n");
+
+    // Itera por toda a tabela de símbolos
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        Symbol *simbolo = tabela_simbolos->table[i];
+        while (simbolo != NULL) {
+            // Se o símbolo é uma variável no escopo GLOBAL...
+            if (strcmp(simbolo->scope, "GLOBAL") == 0) {
+                if (simbolo->id_type == var_k) {
+                    fprintf(arquivoSaida, "    %s: .word 0\n", simbolo->name);
+                } else if (simbolo->id_type == array_k) {
+                    //Declaração de array;
+                    int tamanho_bytes = simbolo->size;
+                    fprintf(arquivoSaida, "    %s: .space %d\n", simbolo->name, tamanho_bytes);
+                }
+            }
+            simbolo = simbolo->next;
+        }
+    }
+    fprintf(arquivoSaida, "\n.text\n");
     fprintf(arquivoSaida, "b main\n");
 
     // Itera por toda a lista de instruções TAC
     TacNo *percorre = listaTac->inicio;
     while (percorre != NULL) {
-        traduzir_tac_para_assembly(arquivoSaida, percorre);
+        traduzir_tac_para_assembly(arquivoSaida, percorre, tabela_simbolos);
         percorre = percorre->proximo;
     }
 

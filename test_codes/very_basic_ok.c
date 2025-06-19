@@ -1,11 +1,11 @@
-int c[2];
+int x;
 void main(void)
 {
-   int x; int y;
-   x = input(); 
-   y = input();
-   if (x>y)
-       output(x);
-   else
+    int y;
+    x = input(); 
+    y = input();
+    if (x>y)
+        output(x);
+    else
         output(y);
 }

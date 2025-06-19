@@ -47,6 +47,7 @@ typedef struct Symbol {
     char *type;
     char *scope;
     int size;
+    int offset;
     struct Symbol *next;
 } Symbol;
 
@@ -55,6 +56,11 @@ typedef struct HashTable {
     Symbol *table[TABLE_SIZE];
 } HashTable;
 
+// Estrutura auxiliar para rastrear o offset de cada função
+typedef struct {
+    char nome_escopo[MAXLEXEME];
+    int proximo_offset_disponivel;
+} InfoFrame;
 
 extern char *id_lexema;
 extern HashTable *symbol_table; // Tabela de simbolos
@@ -66,10 +72,11 @@ HashTable* create_table();
 unsigned int hash(char *scope, char *name);
 void iterate_tree(No* root, HashTable* symbol_table);
 void add_to_hash_table(Symbol* symbol, HashTable* symbol_table);
-Symbol* create_symbol(char* name, int linha, DeclarationKind id_type, char* type, char* scope, int size);
+Symbol* create_symbol(char* name, int linha, DeclarationKind id_type, char* type, char* scope, int size, int offset);
 char* get_scope(No* root);
 void print_symbol_table(FILE *file, HashTable* symbol_table);
 Symbol* find_symbol(HashTable* symbol_table, char* name, char* scope);
+void calcular_layout_de_pilha(HashTable* symbol_table);
 
 // Análise semântica
 void semantic_analysis(No* root, HashTable* symbol_table);
@@ -111,6 +118,6 @@ void gerar_assembly(FILE *saida, Tac *lista_tac, HashTable *tabela_simbolos);
 // Gerador de código assembly
 //
 void gerar_assembly(FILE *saida, Tac *lista_tac, HashTable *tabela_simbolos);
-void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac);
-void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac);
+void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabela_simbolos);
+void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac, HashTable *tabela_simbolos);
 char* get_reg(const char *temp_name);

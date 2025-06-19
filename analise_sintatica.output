@@ -1,0 +1,1377 @@
+Grammar
+
+    0 $accept: programa $end
+
+    1 programa: declaracao_lista
+
+    2 declaracao_lista: declaracao_lista declaracao
+    3                 | declaracao
+
+    4 declaracao: var_declaracao
+    5           | fun_declaracao
+
+    6 id: T_ID
+
+    7 num: T_NUM
+
+    8 var_declaracao: tipo_especificador id T_SEMICOLON
+    9               | tipo_especificador id T_LBRACKET num T_RBRACKET T_SEMICOLON
+
+   10 tipo_especificador: T_INT
+   11                   | T_VOID
+
+   12 fun_declaracao: tipo_especificador f_id T_LPAREN params T_RPAREN composto_decl
+   13               | tipo_especificador f_id T_LPAREN T_RPAREN composto_decl
+
+   14 f_id: T_ID
+
+   15 params: param_lista
+   16       | T_VOID
+
+   17 param_lista: param
+   18            | param_lista T_COMMA param
+
+   19 param: tipo_especificador T_ID
+   20      | tipo_especificador T_ID T_LBRACKET T_RBRACKET
+
+   21 composto_decl: T_LBRACE local_declaracoes statement_lista T_RBRACE
+
+   22 local_declaracoes: local_declaracoes var_declaracao
+   23                  | ε
+
+   24 statement_lista: statement
+   25                | statement_lista statement
+
+   26 statement: expressao_decl
+   27          | composto_decl
+   28          | selecao_decl
+   29          | iteracao_decl
+   30          | retorno_decl
+
+   31 expressao_decl: expressao T_SEMICOLON
+
+   32 selecao_decl: T_IF T_LPAREN expressao T_RPAREN statement
+   33             | T_IF T_LPAREN expressao T_RPAREN statement T_ELSE statement
+
+   34 iteracao_decl: T_WHILE T_LPAREN expressao T_RPAREN statement
+
+   35 retorno_decl: T_RETURN T_SEMICOLON
+   36             | T_RETURN expressao T_SEMICOLON
+
+   37 expressao: var T_ASSIGN expressao
+   38          | simples_expressao
+
+   39 var: f_id
+   40    | f_id T_LBRACKET expressao T_RBRACKET
+
+   41 simples_expressao: soma_expressao
+   42                  | soma_expressao relacional soma_expressao
+
+   43 relacional: T_LT
+   44           | T_LEQ
+   45           | T_GT
+   46           | T_GEQ
+   47           | T_EQ
+   48           | T_NEQ
+
+   49 soma_expressao: termo
+   50               | soma_expressao T_PLUS termo
+   51               | soma_expressao T_MINUS termo
+
+   52 termo: fator
+   53      | termo T_TIMES fator
+   54      | termo T_OVER fator
+   55      | termo T_MOD fator
+
+   56 fator: T_LPAREN expressao T_RPAREN
+   57      | var
+   58      | ativacao
+   59      | T_NUM
+
+   60 ativacao: f_id T_LPAREN args T_RPAREN
+   61         | f_id T_LPAREN T_RPAREN
+
+   62 args: args_lista
+
+   63 args_lista: expressao
+   64           | args_lista T_COMMA expressao
+
+
+Terminals, with rules where they appear
+
+    $end (0) 0
+    error (256)
+    T_INT (258) 10
+    T_VOID (259) 11 16
+    T_IF (260) 32 33
+    T_ELSE (261) 33
+    T_WHILE (262) 34
+    T_RETURN (263) 35 36
+    T_ID (264) 6 14 19 20
+    T_NUM (265) 7 59
+    T_SEMICOLON (266) 8 9 31 35 36
+    T_COMMA (267) 18 64
+    T_ASSIGN (268) 37
+    T_LPAREN (269) 12 13 32 33 34 56 60 61
+    T_RPAREN (270) 12 13 32 33 34 56 60 61
+    T_LBRACE (271) 21
+    T_RBRACE (272) 21
+    T_LBRACKET (273) 9 20 40
+    T_RBRACKET (274) 9 20 40
+    T_LT (275) 43
+    T_LEQ (276) 44
+    T_GT (277) 45
+    T_GEQ (278) 46
+    T_EQ (279) 47
+    T_NEQ (280) 48
+    T_PLUS (281) 50
+    T_MINUS (282) 51
+    T_TIMES (283) 53
+    T_OVER (284) 54
+    T_MOD (285) 55
+    LOWER_THAN_ELSE (286)
+
+
+Nonterminals, with rules where they appear
+
+    $accept (32)
+        on left: 0
+    programa (33)
+        on left: 1
+        on right: 0
+    declaracao_lista (34)
+        on left: 2 3
+        on right: 1 2
+    declaracao (35)
+        on left: 4 5
+        on right: 2 3
+    id (36)
+        on left: 6
+        on right: 8 9
+    num (37)
+        on left: 7
+        on right: 9
+    var_declaracao (38)
+        on left: 8 9
+        on right: 4 22
+    tipo_especificador (39)
+        on left: 10 11
+        on right: 8 9 12 13 19 20
+    fun_declaracao (40)
+        on left: 12 13
+        on right: 5
+    f_id (41)
+        on left: 14
+        on right: 12 13 39 40 60 61
+    params (42)
+        on left: 15 16
+        on right: 12
+    param_lista (43)
+        on left: 17 18
+        on right: 15 18
+    param (44)
+        on left: 19 20
+        on right: 17 18
+    composto_decl (45)
+        on left: 21
+        on right: 12 13 27
+    local_declaracoes (46)
+        on left: 22 23
+        on right: 21 22
+    statement_lista (47)
+        on left: 24 25
+        on right: 21 25
+    statement (48)
+        on left: 26 27 28 29 30
+        on right: 24 25 32 33 34
+    expressao_decl (49)
+        on left: 31
+        on right: 26
+    selecao_decl (50)
+        on left: 32 33
+        on right: 28
+    iteracao_decl (51)
+        on left: 34
+        on right: 29
+    retorno_decl (52)
+        on left: 35 36
+        on right: 30
+    expressao (53)
+        on left: 37 38
+        on right: 31 32 33 34 36 37 40 56 63 64
+    var (54)
+        on left: 39 40
+        on right: 37 57
+    simples_expressao (55)
+        on left: 41 42
+        on right: 38
+    relacional (56)
+        on left: 43 44 45 46 47 48
+        on right: 42
+    soma_expressao (57)
+        on left: 49 50 51
+        on right: 41 42 50 51
+    termo (58)
+        on left: 52 53 54 55
+        on right: 49 50 51 53 54 55
+    fator (59)
+        on left: 56 57 58 59
+        on right: 52 53 54 55
+    ativacao (60)
+        on left: 60 61
+        on right: 58
+    args (61)
+        on left: 62
+        on right: 60
+    args_lista (62)
+        on left: 63 64
+        on right: 62 64
+
+
+State 0
+
+    0 $accept: • programa $end
+
+    T_INT   shift, and go to state 1
+    T_VOID  shift, and go to state 2
+
+    programa            go to state 3
+    declaracao_lista    go to state 4
+    declaracao          go to state 5
+    var_declaracao      go to state 6
+    tipo_especificador  go to state 7
+    fun_declaracao      go to state 8
+
+
+State 1
+
+   10 tipo_especificador: T_INT •
+
+    $default  reduce using rule 10 (tipo_especificador)
+
+
+State 2
+
+   11 tipo_especificador: T_VOID •
+
+    $default  reduce using rule 11 (tipo_especificador)
+
+
+State 3
+
+    0 $accept: programa • $end
+
+    $end  shift, and go to state 9
+
+
+State 4
+
+    1 programa: declaracao_lista •
+    2 declaracao_lista: declaracao_lista • declaracao
+
+    T_INT   shift, and go to state 1
+    T_VOID  shift, and go to state 2
+
+    $default  reduce using rule 1 (programa)
+
+    declaracao          go to state 10
+    var_declaracao      go to state 6
+    tipo_especificador  go to state 7
+    fun_declaracao      go to state 8
+
+
+State 5
+
+    3 declaracao_lista: declaracao •
+
+    $default  reduce using rule 3 (declaracao_lista)
+
+
+State 6
+
+    4 declaracao: var_declaracao •
+
+    $default  reduce using rule 4 (declaracao)
+
+
+State 7
+
+    8 var_declaracao: tipo_especificador • id T_SEMICOLON
+    9               | tipo_especificador • id T_LBRACKET num T_RBRACKET T_SEMICOLON
+   12 fun_declaracao: tipo_especificador • f_id T_LPAREN params T_RPAREN composto_decl
+   13               | tipo_especificador • f_id T_LPAREN T_RPAREN composto_decl
+
+    T_ID  shift, and go to state 11
+
+    id    go to state 12
+    f_id  go to state 13
+
+
+State 8
+
+    5 declaracao: fun_declaracao •
+
+    $default  reduce using rule 5 (declaracao)
+
+
+State 9
+
+    0 $accept: programa $end •
+
+    $default  accept
+
+
+State 10
+
+    2 declaracao_lista: declaracao_lista declaracao •
+
+    $default  reduce using rule 2 (declaracao_lista)
+
+
+State 11
+
+    6 id: T_ID •
+   14 f_id: T_ID •
+
+    T_LPAREN  reduce using rule 14 (f_id)
+    $default  reduce using rule 6 (id)
+
+
+State 12
+
+    8 var_declaracao: tipo_especificador id • T_SEMICOLON
+    9               | tipo_especificador id • T_LBRACKET num T_RBRACKET T_SEMICOLON
+
+    T_SEMICOLON  shift, and go to state 14
+    T_LBRACKET   shift, and go to state 15
+
+
+State 13
+
+   12 fun_declaracao: tipo_especificador f_id • T_LPAREN params T_RPAREN composto_decl
+   13               | tipo_especificador f_id • T_LPAREN T_RPAREN composto_decl
+
+    T_LPAREN  shift, and go to state 16
+
+
+State 14
+
+    8 var_declaracao: tipo_especificador id T_SEMICOLON •
+
+    $default  reduce using rule 8 (var_declaracao)
+
+
+State 15
+
+    9 var_declaracao: tipo_especificador id T_LBRACKET • num T_RBRACKET T_SEMICOLON
+
+    T_NUM  shift, and go to state 17
+
+    num  go to state 18
+
+
+State 16
+
+   12 fun_declaracao: tipo_especificador f_id T_LPAREN • params T_RPAREN composto_decl
+   13               | tipo_especificador f_id T_LPAREN • T_RPAREN composto_decl
+
+    T_INT     shift, and go to state 1
+    T_VOID    shift, and go to state 19
+    T_RPAREN  shift, and go to state 20
+
+    tipo_especificador  go to state 21
+    params              go to state 22
+    param_lista         go to state 23
+    param               go to state 24
+
+
+State 17
+
+    7 num: T_NUM •
+
+    $default  reduce using rule 7 (num)
+
+
+State 18
+
+    9 var_declaracao: tipo_especificador id T_LBRACKET num • T_RBRACKET T_SEMICOLON
+
+    T_RBRACKET  shift, and go to state 25
+
+
+State 19
+
+   11 tipo_especificador: T_VOID •
+   16 params: T_VOID •
+
+    T_RPAREN  reduce using rule 16 (params)
+    $default  reduce using rule 11 (tipo_especificador)
+
+
+State 20
+
+   13 fun_declaracao: tipo_especificador f_id T_LPAREN T_RPAREN • composto_decl
+
+    T_LBRACE  shift, and go to state 26
+
+    composto_decl  go to state 27
+
+
+State 21
+
+   19 param: tipo_especificador • T_ID
+   20      | tipo_especificador • T_ID T_LBRACKET T_RBRACKET
+
+    T_ID  shift, and go to state 28
+
+
+State 22
+
+   12 fun_declaracao: tipo_especificador f_id T_LPAREN params • T_RPAREN composto_decl
+
+    T_RPAREN  shift, and go to state 29
+
+
+State 23
+
+   15 params: param_lista •
+   18 param_lista: param_lista • T_COMMA param
+
+    T_COMMA  shift, and go to state 30
+
+    $default  reduce using rule 15 (params)
+
+
+State 24
+
+   17 param_lista: param •
+
+    $default  reduce using rule 17 (param_lista)
+
+
+State 25
+
+    9 var_declaracao: tipo_especificador id T_LBRACKET num T_RBRACKET • T_SEMICOLON
+
+    T_SEMICOLON  shift, and go to state 31
+
+
+State 26
+
+   21 composto_decl: T_LBRACE • local_declaracoes statement_lista T_RBRACE
+
+    $default  reduce using rule 23 (local_declaracoes)
+
+    local_declaracoes  go to state 32
+
+
+State 27
+
+   13 fun_declaracao: tipo_especificador f_id T_LPAREN T_RPAREN composto_decl •
+
+    $default  reduce using rule 13 (fun_declaracao)
+
+
+State 28
+
+   19 param: tipo_especificador T_ID •
+   20      | tipo_especificador T_ID • T_LBRACKET T_RBRACKET
+
+    T_LBRACKET  shift, and go to state 33
+
+    $default  reduce using rule 19 (param)
+
+
+State 29
+
+   12 fun_declaracao: tipo_especificador f_id T_LPAREN params T_RPAREN • composto_decl
+
+    T_LBRACE  shift, and go to state 26
+
+    composto_decl  go to state 34
+
+
+State 30
+
+   18 param_lista: param_lista T_COMMA • param
+
+    T_INT   shift, and go to state 1
+    T_VOID  shift, and go to state 2
+
+    tipo_especificador  go to state 21
+    param               go to state 35
+
+
+State 31
+
+    9 var_declaracao: tipo_especificador id T_LBRACKET num T_RBRACKET T_SEMICOLON •
+
+    $default  reduce using rule 9 (var_declaracao)
+
+
+State 32
+
+   21 composto_decl: T_LBRACE local_declaracoes • statement_lista T_RBRACE
+   22 local_declaracoes: local_declaracoes • var_declaracao
+
+    T_INT     shift, and go to state 1
+    T_VOID    shift, and go to state 2
+    T_IF      shift, and go to state 36
+    T_WHILE   shift, and go to state 37
+    T_RETURN  shift, and go to state 38
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+    T_LBRACE  shift, and go to state 26
+
+    var_declaracao      go to state 42
+    tipo_especificador  go to state 43
+    f_id                go to state 44
+    composto_decl       go to state 45
+    statement_lista     go to state 46
+    statement           go to state 47
+    expressao_decl      go to state 48
+    selecao_decl        go to state 49
+    iteracao_decl       go to state 50
+    retorno_decl        go to state 51
+    expressao           go to state 52
+    var                 go to state 53
+    simples_expressao   go to state 54
+    soma_expressao      go to state 55
+    termo               go to state 56
+    fator               go to state 57
+    ativacao            go to state 58
+
+
+State 33
+
+   20 param: tipo_especificador T_ID T_LBRACKET • T_RBRACKET
+
+    T_RBRACKET  shift, and go to state 59
+
+
+State 34
+
+   12 fun_declaracao: tipo_especificador f_id T_LPAREN params T_RPAREN composto_decl •
+
+    $default  reduce using rule 12 (fun_declaracao)
+
+
+State 35
+
+   18 param_lista: param_lista T_COMMA param •
+
+    $default  reduce using rule 18 (param_lista)
+
+
+State 36
+
+   32 selecao_decl: T_IF • T_LPAREN expressao T_RPAREN statement
+   33             | T_IF • T_LPAREN expressao T_RPAREN statement T_ELSE statement
+
+    T_LPAREN  shift, and go to state 60
+
+
+State 37
+
+   34 iteracao_decl: T_WHILE • T_LPAREN expressao T_RPAREN statement
+
+    T_LPAREN  shift, and go to state 61
+
+
+State 38
+
+   35 retorno_decl: T_RETURN • T_SEMICOLON
+   36             | T_RETURN • expressao T_SEMICOLON
+
+    T_ID         shift, and go to state 39
+    T_NUM        shift, and go to state 40
+    T_SEMICOLON  shift, and go to state 62
+    T_LPAREN     shift, and go to state 41
+
+    f_id               go to state 44
+    expressao          go to state 63
+    var                go to state 53
+    simples_expressao  go to state 54
+    soma_expressao     go to state 55
+    termo              go to state 56
+    fator              go to state 57
+    ativacao           go to state 58
+
+
+State 39
+
+   14 f_id: T_ID •
+
+    $default  reduce using rule 14 (f_id)
+
+
+State 40
+
+   59 fator: T_NUM •
+
+    $default  reduce using rule 59 (fator)
+
+
+State 41
+
+   56 fator: T_LPAREN • expressao T_RPAREN
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+
+    f_id               go to state 44
+    expressao          go to state 64
+    var                go to state 53
+    simples_expressao  go to state 54
+    soma_expressao     go to state 55
+    termo              go to state 56
+    fator              go to state 57
+    ativacao           go to state 58
+
+
+State 42
+
+   22 local_declaracoes: local_declaracoes var_declaracao •
+
+    $default  reduce using rule 22 (local_declaracoes)
+
+
+State 43
+
+    8 var_declaracao: tipo_especificador • id T_SEMICOLON
+    9               | tipo_especificador • id T_LBRACKET num T_RBRACKET T_SEMICOLON
+
+    T_ID  shift, and go to state 65
+
+    id  go to state 12
+
+
+State 44
+
+   39 var: f_id •
+   40    | f_id • T_LBRACKET expressao T_RBRACKET
+   60 ativacao: f_id • T_LPAREN args T_RPAREN
+   61         | f_id • T_LPAREN T_RPAREN
+
+    T_LPAREN    shift, and go to state 66
+    T_LBRACKET  shift, and go to state 67
+
+    $default  reduce using rule 39 (var)
+
+
+State 45
+
+   27 statement: composto_decl •
+
+    $default  reduce using rule 27 (statement)
+
+
+State 46
+
+   21 composto_decl: T_LBRACE local_declaracoes statement_lista • T_RBRACE
+   25 statement_lista: statement_lista • statement
+
+    T_IF      shift, and go to state 36
+    T_WHILE   shift, and go to state 37
+    T_RETURN  shift, and go to state 38
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+    T_LBRACE  shift, and go to state 26
+    T_RBRACE  shift, and go to state 68
+
+    f_id               go to state 44
+    composto_decl      go to state 45
+    statement          go to state 69
+    expressao_decl     go to state 48
+    selecao_decl       go to state 49
+    iteracao_decl      go to state 50
+    retorno_decl       go to state 51
+    expressao          go to state 52
+    var                go to state 53
+    simples_expressao  go to state 54
+    soma_expressao     go to state 55
+    termo              go to state 56
+    fator              go to state 57
+    ativacao           go to state 58
+
+
+State 47
+
+   24 statement_lista: statement •
+
+    $default  reduce using rule 24 (statement_lista)
+
+
+State 48
+
+   26 statement: expressao_decl •
+
+    $default  reduce using rule 26 (statement)
+
+
+State 49
+
+   28 statement: selecao_decl •
+
+    $default  reduce using rule 28 (statement)
+
+
+State 50
+
+   29 statement: iteracao_decl •
+
+    $default  reduce using rule 29 (statement)
+
+
+State 51
+
+   30 statement: retorno_decl •
+
+    $default  reduce using rule 30 (statement)
+
+
+State 52
+
+   31 expressao_decl: expressao • T_SEMICOLON
+
+    T_SEMICOLON  shift, and go to state 70
+
+
+State 53
+
+   37 expressao: var • T_ASSIGN expressao
+   57 fator: var •
+
+    T_ASSIGN  shift, and go to state 71
+
+    $default  reduce using rule 57 (fator)
+
+
+State 54
+
+   38 expressao: simples_expressao •
+
+    $default  reduce using rule 38 (expressao)
+
+
+State 55
+
+   41 simples_expressao: soma_expressao •
+   42                  | soma_expressao • relacional soma_expressao
+   50 soma_expressao: soma_expressao • T_PLUS termo
+   51               | soma_expressao • T_MINUS termo
+
+    T_LT     shift, and go to state 72
+    T_LEQ    shift, and go to state 73
+    T_GT     shift, and go to state 74
+    T_GEQ    shift, and go to state 75
+    T_EQ     shift, and go to state 76
+    T_NEQ    shift, and go to state 77
+    T_PLUS   shift, and go to state 78
+    T_MINUS  shift, and go to state 79
+
+    $default  reduce using rule 41 (simples_expressao)
+
+    relacional  go to state 80
+
+
+State 56
+
+   49 soma_expressao: termo •
+   53 termo: termo • T_TIMES fator
+   54      | termo • T_OVER fator
+   55      | termo • T_MOD fator
+
+    T_TIMES  shift, and go to state 81
+    T_OVER   shift, and go to state 82
+    T_MOD    shift, and go to state 83
+
+    $default  reduce using rule 49 (soma_expressao)
+
+
+State 57
+
+   52 termo: fator •
+
+    $default  reduce using rule 52 (termo)
+
+
+State 58
+
+   58 fator: ativacao •
+
+    $default  reduce using rule 58 (fator)
+
+
+State 59
+
+   20 param: tipo_especificador T_ID T_LBRACKET T_RBRACKET •
+
+    $default  reduce using rule 20 (param)
+
+
+State 60
+
+   32 selecao_decl: T_IF T_LPAREN • expressao T_RPAREN statement
+   33             | T_IF T_LPAREN • expressao T_RPAREN statement T_ELSE statement
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+
+    f_id               go to state 44
+    expressao          go to state 84
+    var                go to state 53
+    simples_expressao  go to state 54
+    soma_expressao     go to state 55
+    termo              go to state 56
+    fator              go to state 57
+    ativacao           go to state 58
+
+
+State 61
+
+   34 iteracao_decl: T_WHILE T_LPAREN • expressao T_RPAREN statement
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+
+    f_id               go to state 44
+    expressao          go to state 85
+    var                go to state 53
+    simples_expressao  go to state 54
+    soma_expressao     go to state 55
+    termo              go to state 56
+    fator              go to state 57
+    ativacao           go to state 58
+
+
+State 62
+
+   35 retorno_decl: T_RETURN T_SEMICOLON •
+
+    $default  reduce using rule 35 (retorno_decl)
+
+
+State 63
+
+   36 retorno_decl: T_RETURN expressao • T_SEMICOLON
+
+    T_SEMICOLON  shift, and go to state 86
+
+
+State 64
+
+   56 fator: T_LPAREN expressao • T_RPAREN
+
+    T_RPAREN  shift, and go to state 87
+
+
+State 65
+
+    6 id: T_ID •
+
+    $default  reduce using rule 6 (id)
+
+
+State 66
+
+   60 ativacao: f_id T_LPAREN • args T_RPAREN
+   61         | f_id T_LPAREN • T_RPAREN
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+    T_RPAREN  shift, and go to state 88
+
+    f_id               go to state 44
+    expressao          go to state 89
+    var                go to state 53
+    simples_expressao  go to state 54
+    soma_expressao     go to state 55
+    termo              go to state 56
+    fator              go to state 57
+    ativacao           go to state 58
+    args               go to state 90
+    args_lista         go to state 91
+
+
+State 67
+
+   40 var: f_id T_LBRACKET • expressao T_RBRACKET
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+
+    f_id               go to state 44
+    expressao          go to state 92
+    var                go to state 53
+    simples_expressao  go to state 54
+    soma_expressao     go to state 55
+    termo              go to state 56
+    fator              go to state 57
+    ativacao           go to state 58
+
+
+State 68
+
+   21 composto_decl: T_LBRACE local_declaracoes statement_lista T_RBRACE •
+
+    $default  reduce using rule 21 (composto_decl)
+
+
+State 69
+
+   25 statement_lista: statement_lista statement •
+
+    $default  reduce using rule 25 (statement_lista)
+
+
+State 70
+
+   31 expressao_decl: expressao T_SEMICOLON •
+
+    $default  reduce using rule 31 (expressao_decl)
+
+
+State 71
+
+   37 expressao: var T_ASSIGN • expressao
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+
+    f_id               go to state 44
+    expressao          go to state 93
+    var                go to state 53
+    simples_expressao  go to state 54
+    soma_expressao     go to state 55
+    termo              go to state 56
+    fator              go to state 57
+    ativacao           go to state 58
+
+
+State 72
+
+   43 relacional: T_LT •
+
+    $default  reduce using rule 43 (relacional)
+
+
+State 73
+
+   44 relacional: T_LEQ •
+
+    $default  reduce using rule 44 (relacional)
+
+
+State 74
+
+   45 relacional: T_GT •
+
+    $default  reduce using rule 45 (relacional)
+
+
+State 75
+
+   46 relacional: T_GEQ •
+
+    $default  reduce using rule 46 (relacional)
+
+
+State 76
+
+   47 relacional: T_EQ •
+
+    $default  reduce using rule 47 (relacional)
+
+
+State 77
+
+   48 relacional: T_NEQ •
+
+    $default  reduce using rule 48 (relacional)
+
+
+State 78
+
+   50 soma_expressao: soma_expressao T_PLUS • termo
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+
+    f_id      go to state 44
+    var       go to state 94
+    termo     go to state 95
+    fator     go to state 57
+    ativacao  go to state 58
+
+
+State 79
+
+   51 soma_expressao: soma_expressao T_MINUS • termo
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+
+    f_id      go to state 44
+    var       go to state 94
+    termo     go to state 96
+    fator     go to state 57
+    ativacao  go to state 58
+
+
+State 80
+
+   42 simples_expressao: soma_expressao relacional • soma_expressao
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+
+    f_id            go to state 44
+    var             go to state 94
+    soma_expressao  go to state 97
+    termo           go to state 56
+    fator           go to state 57
+    ativacao        go to state 58
+
+
+State 81
+
+   53 termo: termo T_TIMES • fator
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+
+    f_id      go to state 44
+    var       go to state 94
+    fator     go to state 98
+    ativacao  go to state 58
+
+
+State 82
+
+   54 termo: termo T_OVER • fator
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+
+    f_id      go to state 44
+    var       go to state 94
+    fator     go to state 99
+    ativacao  go to state 58
+
+
+State 83
+
+   55 termo: termo T_MOD • fator
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+
+    f_id      go to state 44
+    var       go to state 94
+    fator     go to state 100
+    ativacao  go to state 58
+
+
+State 84
+
+   32 selecao_decl: T_IF T_LPAREN expressao • T_RPAREN statement
+   33             | T_IF T_LPAREN expressao • T_RPAREN statement T_ELSE statement
+
+    T_RPAREN  shift, and go to state 101
+
+
+State 85
+
+   34 iteracao_decl: T_WHILE T_LPAREN expressao • T_RPAREN statement
+
+    T_RPAREN  shift, and go to state 102
+
+
+State 86
+
+   36 retorno_decl: T_RETURN expressao T_SEMICOLON •
+
+    $default  reduce using rule 36 (retorno_decl)
+
+
+State 87
+
+   56 fator: T_LPAREN expressao T_RPAREN •
+
+    $default  reduce using rule 56 (fator)
+
+
+State 88
+
+   61 ativacao: f_id T_LPAREN T_RPAREN •
+
+    $default  reduce using rule 61 (ativacao)
+
+
+State 89
+
+   63 args_lista: expressao •
+
+    $default  reduce using rule 63 (args_lista)
+
+
+State 90
+
+   60 ativacao: f_id T_LPAREN args • T_RPAREN
+
+    T_RPAREN  shift, and go to state 103
+
+
+State 91
+
+   62 args: args_lista •
+   64 args_lista: args_lista • T_COMMA expressao
+
+    T_COMMA  shift, and go to state 104
+
+    $default  reduce using rule 62 (args)
+
+
+State 92
+
+   40 var: f_id T_LBRACKET expressao • T_RBRACKET
+
+    T_RBRACKET  shift, and go to state 105
+
+
+State 93
+
+   37 expressao: var T_ASSIGN expressao •
+
+    $default  reduce using rule 37 (expressao)
+
+
+State 94
+
+   57 fator: var •
+
+    $default  reduce using rule 57 (fator)
+
+
+State 95
+
+   50 soma_expressao: soma_expressao T_PLUS termo •
+   53 termo: termo • T_TIMES fator
+   54      | termo • T_OVER fator
+   55      | termo • T_MOD fator
+
+    T_TIMES  shift, and go to state 81
+    T_OVER   shift, and go to state 82
+    T_MOD    shift, and go to state 83
+
+    $default  reduce using rule 50 (soma_expressao)
+
+
+State 96
+
+   51 soma_expressao: soma_expressao T_MINUS termo •
+   53 termo: termo • T_TIMES fator
+   54      | termo • T_OVER fator
+   55      | termo • T_MOD fator
+
+    T_TIMES  shift, and go to state 81
+    T_OVER   shift, and go to state 82
+    T_MOD    shift, and go to state 83
+
+    $default  reduce using rule 51 (soma_expressao)
+
+
+State 97
+
+   42 simples_expressao: soma_expressao relacional soma_expressao •
+   50 soma_expressao: soma_expressao • T_PLUS termo
+   51               | soma_expressao • T_MINUS termo
+
+    T_PLUS   shift, and go to state 78
+    T_MINUS  shift, and go to state 79
+
+    $default  reduce using rule 42 (simples_expressao)
+
+
+State 98
+
+   53 termo: termo T_TIMES fator •
+
+    $default  reduce using rule 53 (termo)
+
+
+State 99
+
+   54 termo: termo T_OVER fator •
+
+    $default  reduce using rule 54 (termo)
+
+
+State 100
+
+   55 termo: termo T_MOD fator •
+
+    $default  reduce using rule 55 (termo)
+
+
+State 101
+
+   32 selecao_decl: T_IF T_LPAREN expressao T_RPAREN • statement
+   33             | T_IF T_LPAREN expressao T_RPAREN • statement T_ELSE statement
+
+    T_IF      shift, and go to state 36
+    T_WHILE   shift, and go to state 37
+    T_RETURN  shift, and go to state 38
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+    T_LBRACE  shift, and go to state 26
+
+    f_id               go to state 44
+    composto_decl      go to state 45
+    statement          go to state 106
+    expressao_decl     go to state 48
+    selecao_decl       go to state 49
+    iteracao_decl      go to state 50
+    retorno_decl       go to state 51
+    expressao          go to state 52
+    var                go to state 53
+    simples_expressao  go to state 54
+    soma_expressao     go to state 55
+    termo              go to state 56
+    fator              go to state 57
+    ativacao           go to state 58
+
+
+State 102
+
+   34 iteracao_decl: T_WHILE T_LPAREN expressao T_RPAREN • statement
+
+    T_IF      shift, and go to state 36
+    T_WHILE   shift, and go to state 37
+    T_RETURN  shift, and go to state 38
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+    T_LBRACE  shift, and go to state 26
+
+    f_id               go to state 44
+    composto_decl      go to state 45
+    statement          go to state 107
+    expressao_decl     go to state 48
+    selecao_decl       go to state 49
+    iteracao_decl      go to state 50
+    retorno_decl       go to state 51
+    expressao          go to state 52
+    var                go to state 53
+    simples_expressao  go to state 54
+    soma_expressao     go to state 55
+    termo              go to state 56
+    fator              go to state 57
+    ativacao           go to state 58
+
+
+State 103
+
+   60 ativacao: f_id T_LPAREN args T_RPAREN •
+
+    $default  reduce using rule 60 (ativacao)
+
+
+State 104
+
+   64 args_lista: args_lista T_COMMA • expressao
+
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+
+    f_id               go to state 44
+    expressao          go to state 108
+    var                go to state 53
+    simples_expressao  go to state 54
+    soma_expressao     go to state 55
+    termo              go to state 56
+    fator              go to state 57
+    ativacao           go to state 58
+
+
+State 105
+
+   40 var: f_id T_LBRACKET expressao T_RBRACKET •
+
+    $default  reduce using rule 40 (var)
+
+
+State 106
+
+   32 selecao_decl: T_IF T_LPAREN expressao T_RPAREN statement •
+   33             | T_IF T_LPAREN expressao T_RPAREN statement • T_ELSE statement
+
+    T_ELSE  shift, and go to state 109
+
+    $default  reduce using rule 32 (selecao_decl)
+
+
+State 107
+
+   34 iteracao_decl: T_WHILE T_LPAREN expressao T_RPAREN statement •
+
+    $default  reduce using rule 34 (iteracao_decl)
+
+
+State 108
+
+   64 args_lista: args_lista T_COMMA expressao •
+
+    $default  reduce using rule 64 (args_lista)
+
+
+State 109
+
+   33 selecao_decl: T_IF T_LPAREN expressao T_RPAREN statement T_ELSE • statement
+
+    T_IF      shift, and go to state 36
+    T_WHILE   shift, and go to state 37
+    T_RETURN  shift, and go to state 38
+    T_ID      shift, and go to state 39
+    T_NUM     shift, and go to state 40
+    T_LPAREN  shift, and go to state 41
+    T_LBRACE  shift, and go to state 26
+
+    f_id               go to state 44
+    composto_decl      go to state 45
+    statement          go to state 110
+    expressao_decl     go to state 48
+    selecao_decl       go to state 49
+    iteracao_decl      go to state 50
+    retorno_decl       go to state 51
+    expressao          go to state 52
+    var                go to state 53
+    simples_expressao  go to state 54
+    soma_expressao     go to state 55
+    termo              go to state 56
+    fator              go to state 57
+    ativacao           go to state 58
+
+
+State 110
+
+   33 selecao_decl: T_IF T_LPAREN expressao T_RPAREN statement T_ELSE statement •
+
+    $default  reduce using rule 33 (selecao_decl)
