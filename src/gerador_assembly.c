@@ -50,11 +50,11 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             break;
         case LAB:
             // Ex: (LAB, L1, , ) -> L1:
-            fprintf(arquivoSaida, "%s:\n", tac->resultado);
+            fprintf(arquivoSaida, "%s:\n", tac->op1);
             break;
         case GOTO:
             // Ex: (GOTO, L1, , ) -> BI #L1
-            fprintf(arquivoSaida, "    BI #%s\n", tac->resultado); //
+            fprintf(arquivoSaida, "    B %s\n", tac->op1); //
             break;
         case HALT:
             // (HALT, , , ) -> FINISH
@@ -116,7 +116,23 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 // 2. Armazena o VALOR do registrador de origem (reg_op1) no endereço em R27
                 fprintf(arquivoSaida, "    STR %s, [R27, #0]\n", reg_op2); //
             } else {
-                fprintf(arquivoSaida, "    ; TODO: STORE para variável local '%s'\n", tac->resultado);
+                simbolo = find_symbol(tabela_simbolos, tac->op1, escopo_atual);
+                if (simbolo != NULL) {
+                    if (simbolo->id_type == var_k){
+                        fprintf(arquivoSaida, "    ; Acessando variavel local '%s'\n", tac->op1);
+                        fprintf(arquivoSaida, "    MOVI R27, #%d\n", simbolo->offset);
+                        fprintf(arquivoSaida, "    ADD R27, R27, FP\n");
+                        fprintf(arquivoSaida, "    STR %s, [R27, #0]\n", reg_op2);
+                    }   
+                    else if (simbolo->id_type == array_k){
+                        fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op1);
+                        fprintf(arquivoSaida, "    ADD R27, R27, FP\n");
+                        fprintf(arquivoSaida, "    STR %s, [R27, #0]\n", reg_op2);
+                    }
+                }
+                else {
+                    fprintf(stderr, "AVISO: Símbolo '%s' não encontrado no escopo '%s' durante a geração de código.\n", tac->op2, escopo_atual);
+                }
             }
             break;
         }
@@ -129,8 +145,9 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         }
         case END:
             break;
-        case IFF:
+        case IFF:{
             break;
+        }
         case CALL: {
             if (strcmp(tac->op2, "input") == 0)  {
                 fprintf(arquivoSaida, "    IN\n");
@@ -167,10 +184,21 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         case RET:
             
             break;
-        case GREATER:
-            
+        case GREATER:{
+            fprintf(arquivoSaida, "    CMP %s, %s\n", reg_op2, reg_res);
+            fprintf(arquivoSaida, "    BLE %s\n", tac->proximo->op2);
             break;
-            
+        }   
+        case EQUAL:{
+            fprintf(arquivoSaida, "    CMP %s, %s\n", reg_op2, reg_res);
+            fprintf(arquivoSaida, "    BNEQ %s\n", tac->proximo->op2);
+            break;
+        }
+        case LESS:{
+            fprintf(arquivoSaida, "    CMP %s, %s\n", reg_op2, reg_res);
+            fprintf(arquivoSaida, "    BGE %s\n", tac->proximo->op2);
+            break;
+        }      
         default:
             fprintf(arquivoSaida, "    ; AVISO: Operação TAC %d não reconhecida.\n", tac->operacao);
             break;
