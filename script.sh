@@ -5,7 +5,7 @@ flex src/lexical_analyser.l
 bison -d src/analise_sintatica.y
 
 # Compile the generated C code along with any additional source files
-gcc -g -o compiler lex.yy.c analise_sintatica.tab.c src/arvore.c src/tabSimbolos.c src/analise_semantica.c globals.h src/codigo_intermediario.c src/gerador_assembly.c src/main.c -lfl
+gcc -g -o compiler lex.yy.c analise_sintatica.tab.c src/arvore.c src/tabSimbolos.c src/analise_semantica.c globals.h src/codigo_intermediario.c src/gerador_assembly.c src/main.c src/pilha.c -lfl
 
 # Create a directory to store the output files
 if [ ! -d "outputs" ]; then

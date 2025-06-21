@@ -2,9 +2,60 @@
 #define TABLE_SIZE 512
 #include <stdio.h>
 
-// Árvore de sintaxe abstrata
 #define NUMMAXFILHOS 3
 #define MAXLEXEME 25
+
+//Estrutura de pilha
+// O nó que armazena o dado
+typedef struct noPilha
+{
+    char palavra[MAXLEXEME];
+    struct noPilha *proximo;
+} NoPilha;
+
+// A estrutura que gerencia a pilha
+typedef struct pilha
+{
+    int qtd_nos;
+    NoPilha *topo;
+} Pilha;
+
+
+/**
+ * @brief Cria e inicializa uma nova pilha vazia.
+ * @return Um ponteiro para a nova pilha alocada.
+ */
+Pilha* criar_pilha();
+
+/**
+ * @brief Adiciona uma nova string ao topo da pilha.
+ * @param p Ponteiro para a pilha.
+ * @param palavra A string a ser adicionada.
+ */
+void push(Pilha *p, const char *palavra);
+
+/**
+ * @brief Remove o elemento do topo da pilha.
+ * @param p Ponteiro para a pilha.
+ */
+void pop(Pilha *p);
+
+/**
+ * @brief Retorna a string no topo da pilha sem removê-la.
+ * @param p Ponteiro para a pilha.
+ * @return A string no topo, ou NULL se a pilha estiver vazia.
+ */
+char* peek(Pilha *p);
+
+/**
+ * @brief Libera toda a memória alocada pela pilha e seus nós.
+ * @param p Ponteiro para a pilha a ser liberada.
+ */
+void free_stack(Pilha *p);
+
+
+// Árvore de sintaxe abstrata
+
 
 typedef enum {statement_k, expression_k, declaration_k} NodeKind;
 typedef enum {if_k, while_k, return_k, break_k, continue_k, expression_statement_k} StatementKind;
@@ -119,6 +170,6 @@ void gerar_assembly(FILE *saida, Tac *lista_tac, HashTable *tabela_simbolos);
 // Gerador de código assembly
 //
 void gerar_assembly(FILE *saida, Tac *lista_tac, HashTable *tabela_simbolos);
-void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabela_simbolos);
+void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabela_simbolos, char* escopo_atual);
 void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac, HashTable *tabela_simbolos);
 char* get_reg(const char *temp_name);

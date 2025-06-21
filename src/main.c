@@ -45,7 +45,7 @@ int main(int argc, char **argv) {
     return 0;
 }
 
-//Debugar com Valgrind
+// //Debugar com Valgrind
 
 // #include <stdio.h>
 // #include <stdlib.h>
