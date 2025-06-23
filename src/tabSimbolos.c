@@ -55,7 +55,7 @@ int atualizar_offset(char* scope, int size) {
     }
     
     frames[index].proximo_offset_disponivel += size;
-    if(strcmp(scope ,"main") == 0) {
+    if(strcmp(scope ,"main") == 0 || strcmp(scope,"GLOBAL") == 0) {
         return frames[index].proximo_offset_disponivel - size;
     }
     else {
