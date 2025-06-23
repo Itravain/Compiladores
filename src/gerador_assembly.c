@@ -166,7 +166,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 fprintf(arquivoSaida, "    MOV %s, Rin\n", get_reg(tac->op1));
 
             }
-            if (strcmp(tac->op2, "output") == 0)  {
+            else if (strcmp(tac->op2, "output") == 0)  {
                 fprintf(arquivoSaida, "    MOV Rout, %s\n", get_reg(tac->anterior->op1));
                 fprintf(arquivoSaida, "    OUT\n");
             }

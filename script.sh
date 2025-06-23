@@ -14,4 +14,4 @@ fi
 
 # Run the compiled program
 # ./compiler < test_codes/sort_ok.c > outputs/output.txt 2>&1
-./compiler < test_codes/_teste_1.c > outputs/output.txt 2>&1
+./compiler < test_codes/sort_ok.c > outputs/output.txt 2>&1
