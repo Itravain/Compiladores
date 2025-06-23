@@ -44,18 +44,23 @@ int get_frame_index(char* scope) {
         num_frames++;
         return num_frames - 1; // Return the index of the new frame
     }
-    return -1; // Not found
+    return -999; // Not found
 }
 
 int atualizar_offset(char* scope, int size) {
     int index = get_frame_index(scope);
     if (index == -1) {
         fprintf(stderr, "Erro: Escopo %s não encontrado.\n", scope);
-        return -1; // Error
+        return -999; // Error
     }
     
     frames[index].proximo_offset_disponivel += size;
-    return frames[index].proximo_offset_disponivel - size; // Return the previous offset
+    if(strcmp(scope ,"main") == 0) {
+        return frames[index].proximo_offset_disponivel - size;
+    }
+    else {
+        return frames[index].proximo_offset_disponivel - size + 2;
+    }
 }
 
 

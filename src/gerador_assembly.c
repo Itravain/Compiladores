@@ -34,7 +34,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
     switch (tac->operacao) {
         case SUM:
             // Ex: (SUM, t2, t0, t1) -> ADD R2, R0, R1
-            fprintf(arquivoSaida, "    ADD %s, %s, %s\n", reg_res, reg_op1, reg_op2);
+            fprintf(arquivoSaida, "    ADD %s, %s, %s\n", reg_op1, reg_res, reg_op2);
             break;
         case SUB:
             // Ex: (SUB, t2, t0, t1) -> SUB R2, R0, R1
@@ -66,18 +66,18 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             if (simbolo != NULL) {
                 if (simbolo->id_type == var_k) {
                     fprintf(arquivoSaida, "    ; Acessando variável global '%s'\n", tac->op2);
-                    // 1. Carrega o endereço da variável em um registrador auxiliar (R27)
-                    fprintf(arquivoSaida, "    MOVI R27, #%d\n", simbolo->offset);
-                    // 2. Carrega o VALOR a partir do endereço em R27 para o registrador de destino
-                    fprintf(arquivoSaida, "    LDR %s, [R27, #0]\n", reg_op1);
+                    // 1. Carrega o endereço da variável em um registrador auxiliar (Rad)
+                    fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                    // 2. Carrega o VALOR a partir do endereço em Rad para o registrador de destino
+                    fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
                 }
                 else if (simbolo->id_type == array_k) {
                     fprintf(arquivoSaida, "    ; Acessando array global '%s'\n", tac->op2);
-                    // 1. Carrega o endereço da variável em um registrador auxiliar (R27)
-                    fprintf(arquivoSaida, "    MOVI R27, #%d\n", simbolo->offset);
-                    fprintf(arquivoSaida, "    ADD R27, %s, %s\n", reg_op1, reg_res);
-                    // 2. Carrega o VALOR a partir do endereço em R27 para o registrador de destino
-                    fprintf(arquivoSaida, "    LDR %s, [R27, #0]\n", reg_op1);
+                    // 1. Carrega o endereço da variável em um registrador auxiliar (Rad)
+                    fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                    fprintf(arquivoSaida, "    ADD Rad, %s, %s\n", reg_op1, reg_res);
+                    // 2. Carrega o VALOR a partir do endereço em Rad para o registrador de destino
+                    fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
                 }   
             //Está dentro de algum escopo 
             } else {
@@ -89,14 +89,14 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                     if (simbolo != NULL) {
                         if (simbolo->id_type == var_k){
                             fprintf(arquivoSaida, "    ; Acessando variavel local '%s'\n", tac->op2);
-                            fprintf(arquivoSaida, "    MOVI R27, #%d\n", simbolo->offset);
-                            fprintf(arquivoSaida, "    ADD R27, R27, FP\n");
-                            fprintf(arquivoSaida, "    LDR %s, [R27, #0]\n", reg_op1);
+                            fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                            fprintf(arquivoSaida, "    ADD Rad, Rad, FP\n");
+                            fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
                         }   
                         else if (simbolo->id_type == array_k){
                             fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op2);
-                            fprintf(arquivoSaida, "    ADD R27, R27, FP\n");
-                            fprintf(arquivoSaida, "    LDR %s, [R27, #0]\n", reg_op1);
+                            fprintf(arquivoSaida, "    ADD Rad, Rad, FP\n");
+                            fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
                         }
                     }
                     else {
@@ -111,23 +111,23 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             Symbol* simbolo = find_symbol(tabela_simbolos, tac->op1, "GLOBAL");
             if (simbolo != NULL) { // É global
                 fprintf(arquivoSaida, "    ; Armazenando em variável global '%s'\n", tac->resultado);
-                // 1. Carrega o endereço da variável em R27
-                fprintf(arquivoSaida, "    MOVI R27, #%d\n", simbolo->offset);
-                // 2. Armazena o VALOR do registrador de origem (reg_op1) no endereço em R27
-                fprintf(arquivoSaida, "    STR %s, [R27, #0]\n", reg_op2); //
+                // 1. Carrega o endereço da variável em Rad
+                fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                // 2. Armazena o VALOR do registrador de origem (reg_op1) no endereço em Rad
+                fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_op2); //
             } else {
                 simbolo = find_symbol(tabela_simbolos, tac->op1, escopo_atual);
                 if (simbolo != NULL) {
                     if (simbolo->id_type == var_k){
                         fprintf(arquivoSaida, "    ; Acessando variavel local '%s'\n", tac->op1);
-                        fprintf(arquivoSaida, "    MOVI R27, #%d\n", simbolo->offset);
-                        fprintf(arquivoSaida, "    ADD R27, R27, FP\n");
-                        fprintf(arquivoSaida, "    STR %s, [R27, #0]\n", reg_op2);
+                        fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                        fprintf(arquivoSaida, "    ADD Rad, Rad, FP\n");
+                        fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_op2);
                     }   
                     else if (simbolo->id_type == array_k){
                         fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op1);
-                        fprintf(arquivoSaida, "    ADD R27, R27, FP\n");
-                        fprintf(arquivoSaida, "    STR %s, [R27, #0]\n", reg_op2);
+                        fprintf(arquivoSaida, "    ADD Rad, Rad, FP\n");
+                        fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_op2);
                     }
                 }
                 else {
@@ -139,7 +139,12 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         
         case FUN: {
             fprintf(arquivoSaida, ".%s\n", tac->op2);
-            fprintf(arquivoSaida, "    MOV FP, SP\n", tac->op2);
+
+            if (strcmp(tac->op2, "main") != 0) {
+                fprintf(arquivoSaida, "    STR Rlink [SP #0]\n");
+                fprintf(arquivoSaida, "    ADDI SP #1\n");
+            }
+            
             strcpy(escopo_atual, tac->op2);
             break;
         }
@@ -151,11 +156,18 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         case CALL: {
             if (strcmp(tac->op2, "input") == 0)  {
                 fprintf(arquivoSaida, "    IN\n");
-                fprintf(arquivoSaida, "    MOV %s, R28\n", get_reg(tac->op1));
+                fprintf(arquivoSaida, "    MOV %s, Rin\n", get_reg(tac->op1));
 
             }
             if (strcmp(tac->op2, "output") == 0)  {
+                fprintf(arquivoSaida, "    MOV Rout, %s\n", get_reg(tac->anterior->op1));
                 fprintf(arquivoSaida, "    OUT\n");
+            }
+            else {
+                fprintf(arquivoSaida, "    STR FP [SP, #0]\n");
+                fprintf(arquivoSaida, "    MOV FP, SP\n");
+                fprintf(arquivoSaida, "    ADDI SP #1\n");
+                fprintf(arquivoSaida, "    BL %s\n", tac->op2);
             }
             
             break;
@@ -164,6 +176,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             fprintf(arquivoSaida, "    ADDI SP #1\n");
             break;
         case PARAM:{
+            
             break;
         }
         case ALLOC: {
@@ -181,9 +194,11 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             fprintf(arquivoSaida,"    MOV %s, %s\n", get_reg(tac->op1), get_reg(tac->op2));
             break;
         }
-        case RET:
+        case RET: {
+
             
             break;
+        }
         case GREATER:{
             fprintf(arquivoSaida, "    CMP %s, %s\n", reg_op2, reg_res);
             fprintf(arquivoSaida, "    BLE %s\n", tac->proximo->op2);
