@@ -8,7 +8,8 @@ int teste(){
 
 void main()
 {
+    int string[3];
     int x;
     x = teste();
-    var_glob = x;
+    glob[4] = x;
 }

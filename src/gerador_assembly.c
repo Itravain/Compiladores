@@ -75,7 +75,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                     fprintf(arquivoSaida, "    ; Acessando array global '%s'\n", tac->op2);
                     // 1. Carrega o endereço da variável em um registrador auxiliar (Rad)
                     fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
-                    fprintf(arquivoSaida, "    ADD Rad, %s, %s\n", reg_op1, reg_res);
+                    fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
                     // 2. Carrega o VALOR a partir do endereço em Rad para o registrador de destino
                     fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
                 }   
@@ -95,6 +95,8 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                         }   
                         else if (simbolo->id_type == array_k){
                             fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op2);
+                            fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                            fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
                             fprintf(arquivoSaida, "    ADD Rad, Rad, FP\n");
                             fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
                         }
