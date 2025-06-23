@@ -4,7 +4,7 @@
 #include "../globals.h"
 #define NUMMAXFILHOS 3
 #define MAXLEXEME 25
-#define MAX_TEMP 32
+#define MAX_TEMP 24
 
 const char *operacoes_nomes[] = {
     "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "IFF", "RET", "GOTO", "LAB",
@@ -45,6 +45,7 @@ Tac *criarNoTac(Tac *estrutura_tac, int operacao,
     novoNo->resultado[sizeof(novoNo->resultado) - 1] = '\0';
 
     novoNo->proximo = NULL;
+    novoNo->anterior = NULL;
 
     if (estrutura_tac == NULL) {
         estrutura_tac = criarTac(NULL);
@@ -60,6 +61,7 @@ Tac *criarNoTac(Tac *estrutura_tac, int operacao,
         estrutura_tac->fim = novoNo;
     }
     else{
+        novoNo->anterior = estrutura_tac->fim;
         estrutura_tac->fim->proximo = novoNo;
         estrutura_tac->fim = novoNo;
     }

@@ -145,6 +145,7 @@ typedef struct tacNo{
     char op1[20];
     char op2[20];
     struct tacNo *proximo;
+    struct tacNo *anterior;
 } TacNo;
 
 typedef struct tac{   
