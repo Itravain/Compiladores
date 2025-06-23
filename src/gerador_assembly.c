@@ -17,7 +17,7 @@ char* get_reg(const char *temp_name) {
     sprintf(reg_name, "R%d", temp_num);
     return reg_name;
 }
-int inicio_stack = 0;
+int primeira_funcao = 0;
 
 void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabela_simbolos, char* escopo_atual) {
     const char *op_nomes[] = {
@@ -138,6 +138,11 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         }
         
         case FUN: {
+            if (primeira_funcao == 0) {
+                fprintf(arquivoSaida, "    B main\n");
+                primeira_funcao = 1;
+            }
+            
             fprintf(arquivoSaida, ".%s\n", tac->op2);
 
             if (strcmp(tac->op2, "main") != 0) {
@@ -195,8 +200,10 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             break;
         }
         case RET: {
-
-            
+            fprintf(arquivoSaida,"    LDR Rlink [FP #1]\n", get_reg(tac->op1), get_reg(tac->op2));
+            fprintf(arquivoSaida,"    MOV SP, FP\n", get_reg(tac->op1), get_reg(tac->op2));
+            fprintf(arquivoSaida,"    LDR FP [FP #0]\n", get_reg(tac->op1), get_reg(tac->op2));
+            fprintf(arquivoSaida,"    B Rlink\n", get_reg(tac->op1), get_reg(tac->op2));
             break;
         }
         case GREATER:{
@@ -241,11 +248,9 @@ void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac, HashTable *tabela_sim
     // Escreve as diretivas iniciais do assembly.
     fprintf(arquivoSaida, "; Arquivo Assembly gerado pelo compilador C-\n");
     
-    fprintf(arquivoSaida, "MOVI SP, #0\n");
-    fprintf(arquivoSaida, "MOVI FP, #0\n");
     fprintf(arquivoSaida, "\n.data\n");
-
-
+    
+    
     // Itera por toda a tabela de símbolos
     for (int i = 0; i < TABLE_SIZE; i++) {
         Symbol *simbolo = tabela_simbolos->table[i];
@@ -264,8 +269,9 @@ void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac, HashTable *tabela_sim
         }
     }
     fprintf(arquivoSaida, "\n.text\n");
-    fprintf(arquivoSaida, "b main\n");
-
+    fprintf(arquivoSaida, "    MOVI SP, #0\n");
+    fprintf(arquivoSaida, "    MOVI FP, #0\n");
+    
     // Itera por toda a lista de instruções TAC
     TacNo *percorre = listaTac->inicio;
     while (percorre != NULL) {
