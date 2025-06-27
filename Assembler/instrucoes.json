@@ -127,7 +127,7 @@
         {
             "Instrução": "B",
             "Descrição": "PC <- Rn",
-            "Formato": "Cond[31:28] 10 0 0 Rn[23:19] XXXXXXXXXXXXXXXXXX",
+            "Formato": "Cond[31:28] 10 0 0 Rn[23:19] XXXXXXXXXXXXXXXXXXX",
             "Exemplo Assembly": "B R1"
         },
         {
