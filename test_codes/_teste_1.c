@@ -1,7 +1,9 @@
 /*chamada de função sem parametro*/
 int var_glob;
 
-int teste(int a){
+int teste(int a, int b){
+    int x;
+    int z;
     a = a + 3;
     return a;
 }
@@ -9,5 +11,6 @@ int teste(int a){
 void main()
 {
     int x;
-    x = teste(var_glob);
+    int u;
+    x = teste(var_glob, u);
 }

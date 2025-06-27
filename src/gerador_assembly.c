@@ -89,9 +89,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                     if (simbolo != NULL) {
                         if (simbolo->id_type == var_k){
                             fprintf(arquivoSaida, "    ; Acessando variavel local '%s'\n", tac->op2);
-                            fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
-                            fprintf(arquivoSaida, "    ADD Rad, Rad, FP\n");
-                            fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                            fprintf(arquivoSaida, "    LDR %s, [FP, #%d]\n", reg_op1, simbolo->offset);
                         }   
                         else if (simbolo->id_type == array_k){
                             fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op2);
@@ -122,9 +120,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 if (simbolo != NULL) {
                     if (simbolo->id_type == var_k){
                         fprintf(arquivoSaida, "    ; Acessando variavel local '%s'\n", tac->op1);
-                        fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
-                        fprintf(arquivoSaida, "    ADD Rad, Rad, FP\n");
-                        fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_op2);
+                        fprintf(arquivoSaida, "    STR %s, [Rad, #%d]\n", reg_op2, simbolo->offset);
                     }   
                     else if (simbolo->id_type == array_k){
                         fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op1);
@@ -188,12 +184,14 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
             break;
         case PARAM:{
-            
+            fprintf(arquivoSaida, "    STR %s [SP, #0]\n", get_reg(tac->op1));
+            fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
+
             break;
         }
         case ALLOC: {
             if (strcmp(tac->resultado, "") == 0) {
-                fprintf(arquivoSaida, "    ADDI SP, SP #1\n");
+                fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
             }
             else {
                 fprintf(arquivoSaida, "    ADDI SP, SP, #%s\n", tac->resultado);

@@ -47,17 +47,26 @@ int get_frame_index(char* scope) {
     return -999; // Not found
 }
 
-int atualizar_offset(char* scope, int size) {
+int atualizar_offset(char* scope, int size, int param) {
     int index = get_frame_index(scope);
     if (index == -1) {
         fprintf(stderr, "Erro: Escopo %s não encontrado.\n", scope);
         return -999; // Error
     }
     
+    
+    //Se for um parametro
+    if(param){
+        frames[index].proximo_offset_disponivel_param++;
+        return frames[index].proximo_offset_disponivel_param - 1;
+    }
+
+    //Variável
     frames[index].proximo_offset_disponivel += size;
     if(strcmp(scope ,"main") == 0 || strcmp(scope,"GLOBAL") == 0) {
         return frames[index].proximo_offset_disponivel - size;
     }
+    //Array
     else {
         return frames[index].proximo_offset_disponivel - size + 2;
     }
@@ -69,7 +78,6 @@ void iterate_tree(No* root, HashTable* symbol_table) {
         return;
     }
     
-    // CONDIÇÃO CORRIGIDA:
     // Processa apenas os nós que iniciam uma declaração (os nós de tipo).
     if (root->kind_node == declaration_k && (strcmp(root->lexmema, "int") == 0 || strcmp(root->lexmema, "void") == 0)) {
         Symbol* new_symbol = NULL;
@@ -84,14 +92,14 @@ void iterate_tree(No* root, HashTable* symbol_table) {
             switch (decl_kind) {
                 case var_k:
                     // Variável simples: int x;
-                    new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, 1, atualizar_offset(scope, 1));
+                    new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, 1, atualizar_offset(scope, 1, 0));
                     break;
 
                 case array_k:
                     // Declaração de array: int a[10];
                     if (symbol_node->filho[0] != NULL) {
                         int size = atoi(symbol_node->filho[0]->lexmema);
-                        new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, size, atualizar_offset(scope, size));
+                        new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, size, atualizar_offset(scope, size, 0));
                     }
                     break;
 
@@ -103,7 +111,7 @@ void iterate_tree(No* root, HashTable* symbol_table) {
 
                 case param_k:
                     // Parâmetro de função: int x
-                    new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, 1, atualizar_offset(scope, 1));
+                    new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, 1, atualizar_offset(scope, 1, 1));
                     break;
                 
                 default:

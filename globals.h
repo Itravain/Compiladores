@@ -111,6 +111,7 @@ typedef struct HashTable {
 typedef struct {
     char nome_escopo[MAXLEXEME];
     int proximo_offset_disponivel;
+    int proximo_offset_disponivel_param;
 } InfoFrame;
 
 extern char *id_lexema;
