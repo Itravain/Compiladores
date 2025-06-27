@@ -4,7 +4,7 @@ int var_glob;
 int teste(int a, int b){
     int x;
     int z;
-    a = a + 3;
+    a = b + 3;
     return a;
 }
 

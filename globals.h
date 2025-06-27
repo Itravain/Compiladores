@@ -165,13 +165,15 @@ void imprimirTac(FILE *arqCodInterm, Tac *tac);
 char* percorrer_arvore(No *node_tree, Tac **tac, int expression_parametro);
 void codigo_intermediario(No *node_tree, Tac *tac);
 
-//gerador código assembly
-void gerar_assembly(FILE *saida, Tac *lista_tac, HashTable *tabela_simbolos);
-
-
 // Gerador de código assembly
-//
+typedef struct escopo
+{
+  char qtd_param[5];
+  char escopo[MAXLEXEME];  
+}Escopo;
+
+
 void gerar_assembly(FILE *saida, Tac *lista_tac, HashTable *tabela_simbolos);
-void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabela_simbolos, char* escopo_atual);
+void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabela_simbolos);
 void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac, HashTable *tabela_simbolos);
 char* get_reg(const char *temp_name);

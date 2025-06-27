@@ -3,6 +3,8 @@
 #include <string.h>
 #include "../globals.h"
 
+Escopo escopo_atual;
+
 //Função para mapear registradores do código intermediário para registradores físicos
 char* get_reg(const char *temp_name) {
     char* reg_name = (char*) malloc(4 * sizeof(char));
@@ -19,7 +21,8 @@ char* get_reg(const char *temp_name) {
 }
 int primeira_funcao = 0;
 
-void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabela_simbolos, char* escopo_atual) {
+
+void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabela_simbolos) {
     const char *op_nomes[] = {
         "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "IFF", "RET", "GOTO", "LAB",
         "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN"
@@ -85,7 +88,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                     fprintf(arquivoSaida, "    MOVI %s, #%s\n", reg_op1, tac->op2);
                 }
                 else {
-                    simbolo = find_symbol(tabela_simbolos, tac->op2, escopo_atual);
+                    simbolo = find_symbol(tabela_simbolos, tac->op2, escopo_atual.escopo);
                     if (simbolo != NULL) {
                         if (simbolo->id_type == var_k){
                             fprintf(arquivoSaida, "    ; Acessando variavel local '%s'\n", tac->op2);
@@ -96,6 +99,12 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                             fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
                             fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
                             fprintf(arquivoSaida, "    ADD Rad, Rad, FP\n");
+                            fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                        }
+                        else if (simbolo->id_type == param_k){
+                            fprintf(arquivoSaida, "    ; Acessando param'%s'\n", tac->op2);
+                            fprintf(arquivoSaida, "    MOV Rad, FP\n", reg_op1, simbolo->offset);
+                            fprintf(arquivoSaida, "    SUBI Rad, Rad, #%d\n", atoi(escopo_atual.qtd_param) - simbolo->offset);
                             fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
                         }
                     }
@@ -116,7 +125,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 // 2. Armazena o VALOR do registrador de origem (reg_op1) no endereço em Rad
                 fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_op2); //
             } else {
-                simbolo = find_symbol(tabela_simbolos, tac->op1, escopo_atual);
+                simbolo = find_symbol(tabela_simbolos, tac->op1, escopo_atual.escopo);
                 if (simbolo != NULL) {
                     if (simbolo->id_type == var_k){
                         fprintf(arquivoSaida, "    ; Acessando variavel local '%s'\n", tac->op1);
@@ -153,7 +162,8 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
             }
             
-            strcpy(escopo_atual, tac->op2);
+            strcpy(escopo_atual.escopo, tac->op2);
+            strcpy(escopo_atual.qtd_param, tac->resultado);
             break;
         }
         case END:
@@ -181,7 +191,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             break;
         } 
         case ARG:
-            fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
+            
             break;
         case PARAM:{
             fprintf(arquivoSaida, "    STR %s [SP, #0]\n", get_reg(tac->op1));
@@ -237,9 +247,10 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
 }
 
 
+
 void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac, HashTable *tabela_simbolos) {
-    char escopo[MAXLEXEME];
-    strcpy(escopo, "GLOBAL");
+    strcpy(escopo_atual.qtd_param, "0");
+    strcpy(escopo_atual.escopo, "GLOBAL");
     
     if (!arquivoSaida) {
         fprintf(stderr, "Erro: Arquivo de saída para assembly é nulo.\n");
@@ -280,7 +291,7 @@ void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac, HashTable *tabela_sim
     // Itera por toda a lista de instruções TAC
     TacNo *percorre = listaTac->inicio;
     while (percorre != NULL) {
-        traduzir_tac_para_assembly(arquivoSaida, percorre, tabela_simbolos, escopo);
+        traduzir_tac_para_assembly(arquivoSaida, percorre, tabela_simbolos);
         percorre = percorre->proximo;
     }
 
