@@ -147,7 +147,12 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             
             fprintf(arquivoSaida, ".%s\n", tac->op2);
 
-            if (strcmp(tac->op2, "main") != 0) {
+
+            if (strcmp(tac->op2, "main") == 0) {
+                fprintf(arquivoSaida, "    MOV FP, SP\n");
+                fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
+            }
+            else {
                 fprintf(arquivoSaida, "    STR Rlink [SP #0]\n");
                 fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
             }
