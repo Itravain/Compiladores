@@ -75,7 +75,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                     fprintf(arquivoSaida, "    ; Acessando array global '%s'\n", tac->op2);
                     // 1. Carrega o endereço da variável em um registrador auxiliar (Rad)
                     fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
-                    fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
+                    fprintf(arquivoSaida, "    ADD Rad, Rad, FP %s\n", reg_res);
                     // 2. Carrega o VALOR a partir do endereço em Rad para o registrador de destino
                     fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
                 }   
@@ -149,7 +149,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
 
             if (strcmp(tac->op2, "main") != 0) {
                 fprintf(arquivoSaida, "    STR Rlink [SP #0]\n");
-                fprintf(arquivoSaida, "    ADDI SP #1\n");
+                fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
             }
             
             strcpy(escopo_atual, tac->op2);
@@ -173,14 +173,14 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             else {
                 fprintf(arquivoSaida, "    STR FP [SP, #0]\n");
                 fprintf(arquivoSaida, "    MOV FP, SP\n");
-                fprintf(arquivoSaida, "    ADDI SP #1\n");
+                fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
                 fprintf(arquivoSaida, "    BL %s\n", tac->op2);
             }
             
             break;
         } 
         case ARG:
-            fprintf(arquivoSaida, "    ADDI SP #1\n");
+            fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
             break;
         case PARAM:{
             
@@ -188,10 +188,10 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         }
         case ALLOC: {
             if (strcmp(tac->resultado, "") == 0) {
-                fprintf(arquivoSaida, "    ADDI SP #1\n");
+                fprintf(arquivoSaida, "    ADDI SP, SP #1\n");
             }
             else {
-                fprintf(arquivoSaida, "    ADDI SP #%s\n", tac->resultado);
+                fprintf(arquivoSaida, "    ADDI SP, SP, #%s\n", tac->resultado);
 
             }
             
