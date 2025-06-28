@@ -45,7 +45,7 @@ class Assembler:
 
         if mnemonic == "ADD":
             final_binary = [
-                '1110', '00', '0', '0011', '0',
+                '1110', '00', '0', '0101', '0',
                 self._get_operand_binary(operands[1]),  # rn
                 self._get_operand_binary(operands[0]),  # rd
                 self._get_operand_binary(operands[2]),  # rm
@@ -53,14 +53,14 @@ class Assembler:
             ]
         elif mnemonic == "ADDI":
             final_binary = [
-                '1110', '00', '1', '0011', '0',
+                '1110', '00', '1', '0101', '0',
                 self._get_operand_binary(operands[1]),  # rn
                 self._get_operand_binary(operands[0]),  # rd
                 self._get_operand_binary(operands[2], 10)  # imm
             ]
         elif mnemonic == "SUB":
             final_binary = [
-                '1110', '00', '0', '0010', '0',
+                '1110', '00', '0', '0011', '0',
                 self._get_operand_binary(operands[1]),  # rn
                 self._get_operand_binary(operands[0]),  # rd
                 self._get_operand_binary(operands[2]),  # rm
@@ -68,14 +68,14 @@ class Assembler:
             ]
         elif mnemonic == "SUBI":
             final_binary = [
-                '1110', '00', '1', '0010', '0',
+                '1110', '00', '1', '0011', '0',
                 self._get_operand_binary(operands[1]),  # rn
                 self._get_operand_binary(operands[0]),  # rd
                 self._get_operand_binary(operands[2], 10)  # imm
             ]
         elif mnemonic == "MUL":
             final_binary = [
-                '1110', '00', '0', '1010', '0',
+                '1110', '00', '0', '1110', '0',
                 self._get_operand_binary(operands[1]),  # rn
                 self._get_operand_binary(operands[0]),  # rd
                 self._get_operand_binary(operands[2]),  # rm
@@ -83,7 +83,7 @@ class Assembler:
             ]
         elif mnemonic == "AND":
             final_binary = [
-                '1110', '00', '0', '0000', '0',
+                '1110', '00', '0', '0001', '0',
                 self._get_operand_binary(operands[1]),  # rn
                 self._get_operand_binary(operands[0]),  # rd
                 self._get_operand_binary(operands[2]),  # rm
@@ -91,14 +91,14 @@ class Assembler:
             ]
         elif mnemonic == "ANDI":
             final_binary = [
-                '1110', '00', '1', '0000', '0',
+                '1110', '00', '1', '0001', '0',
                 self._get_operand_binary(operands[1]),  # rn
                 self._get_operand_binary(operands[0]),  # rd
                 self._get_operand_binary(operands[2], 10)  # imm
             ]
         elif mnemonic == "ORR":
             final_binary = [
-                '1110', '00', '0', '1000', '0',
+                '1110', '00', '0', '1100', '0',
                 self._get_operand_binary(operands[1]),  # rn
                 self._get_operand_binary(operands[0]),  # rd
                 self._get_operand_binary(operands[2]),  # rm
@@ -106,22 +106,22 @@ class Assembler:
             ]
         elif mnemonic == "ORRI":
             final_binary = [
-                '1110', '00', '1', '1000', '0',
+                '1110', '00', '1', '1100', '0',
                 self._get_operand_binary(operands[1]),  # rn
                 self._get_operand_binary(operands[0]),  # rd
                 self._get_operand_binary(operands[2], 10)  # imm
             ]
         elif mnemonic == "MOV":
             final_binary = [
-                '1110', '00', '0', '1001', '0',
-                '00000',  # rn não usado
-                self._get_operand_binary(operands[0]),  # rd
+                '1110', '00', '0', '1101', '0',
                 self._get_operand_binary(operands[1]),  # rm
+                self._get_operand_binary(operands[0]),  # rd
+                '00000',  # rn não usado
                 '00000'
             ]
         elif mnemonic == "MOVI":
             final_binary = [
-                '1110', '00', '1', '1001', '0',
+                '1110', '00', '1', '1101', '0',
                 '00000',  # rn não usado
                 self._get_operand_binary(operands[0]),  # rd
                 self._get_operand_binary(operands[1], 10)  # imm
@@ -204,7 +204,7 @@ class Assembler:
         elif mnemonic == "CMP":
             # Formato: Cond[31:28] 00 0 0111 1 Rn[19:15] xxxxx Rm[9:5] xxxxx
             final_binary = [
-                '1110', '00', '0', '0111', '1',
+                '1110', '00', '0', '1010', '1',
                 self._get_operand_binary(operands[0]),  # rn
                 '00000',                               # rd não usado
                 self._get_operand_binary(operands[1]), # rm
@@ -213,11 +213,19 @@ class Assembler:
         elif mnemonic == "UDIV":
             # Formato: Cond[31:28] 00 0 1011 0 Rn[19:15] Rd[14:10] Rm[9:5] xxxxx
             final_binary = [
-                '1110', '00', '0', '1011', '0',
+                '1110', '00', '0', '1111', '0',
                 self._get_operand_binary(operands[1]),  # rn
                 self._get_operand_binary(operands[0]),  # rd
                 self._get_operand_binary(operands[2]),  # rm
                 '00000'                                 # xxxxx
+            ]
+        elif mnemonic == "UDIVI":
+            # Formato: Cond[31:28] 00 0 1011 0 Rn[19:15] Rd[14:10] Rm[9:5] xxxxx
+            final_binary = [
+                '1110', '00', '1', '1111', '0',
+                self._get_operand_binary(operands[1]),  # rn
+                self._get_operand_binary(operands[0]),  # rd
+                self._get_operand_binary(operands[2], 10)  # imm
             ]
         else:
             raise ValueError(f"Tipo de Instrução desconhecido: {mnemonic}")

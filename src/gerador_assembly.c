@@ -285,6 +285,7 @@ void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac, HashTable *tabela_sim
         }
     }
     fprintf(arquivoSaida, "\n.text\n");
+    fprintf(arquivoSaida, "    NOP\n");
     fprintf(arquivoSaida, "    MOVI SP, #0\n");
     fprintf(arquivoSaida, "    MOVI FP, #0\n");
     
