@@ -140,7 +140,7 @@ void imprimirTac(FILE *arqCodInterm, Tac *tac){
 
 char* gerar_temporario() {
     char* temp_name = malloc(12);
-    static int temp_count = 0;
+    static int temp_count = 1;
     if (temp_name) {
         sprintf(temp_name, "t%d", temp_count++);
     }
