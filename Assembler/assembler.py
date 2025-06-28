@@ -113,7 +113,7 @@ class Assembler:
             ]
         elif mnemonic == "MOV":
             final_binary = [
-                '1110', '00', '0', '1101', '0',
+                '1110', '00', '1', '1101', '0',
                 self._get_operand_binary(operands[1]),  # rm
                 self._get_operand_binary(operands[0]),  # rd
                 '00000',  # rn não usado
