@@ -69,18 +69,11 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             if (simbolo != NULL) {
                 if (simbolo->id_type == var_k) {
                     fprintf(arquivoSaida, "    ; Acessando variável global '%s'\n", tac->op2);
-                    // 1. Carrega o endereço da variável em um registrador auxiliar (Rad)
-                    fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
-                    // 2. Carrega o VALOR a partir do endereço em Rad para o registrador de destino
-                    fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                    fprintf(arquivoSaida, "    LDR %s, [R0, #%d]\n", reg_op1, simbolo->offset);
                 }
                 else if (simbolo->id_type == array_k) {
                     fprintf(arquivoSaida, "    ; Acessando array global '%s'\n", tac->op2);
-                    // 1. Carrega o endereço da variável em um registrador auxiliar (Rad)
-                    fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
-                    fprintf(arquivoSaida, "    ADD Rad, Rad, FP %s\n", reg_res);
-                    // 2. Carrega o VALOR a partir do endereço em Rad para o registrador de destino
-                    fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                    fprintf(arquivoSaida, "    LDR %s, [%s, #%d]\n", reg_op1, reg_res, simbolo->offset);
                 }   
             //Está dentro de algum escopo 
             } else {
@@ -118,20 +111,24 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         case STORE: {
             Symbol* simbolo = find_symbol(tabela_simbolos, tac->op1, "GLOBAL");
             if (simbolo != NULL) { // É global
-                fprintf(arquivoSaida, "    ; Armazenando em variável global '%s'\n", tac->resultado);
-                // 1. Carrega o endereço da variável em Rad
-                fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
-                // 2. Armazena o VALOR do registrador de origem (reg_op1) no endereço em Rad
-                fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_op2); //
+                if (simbolo->id_type == var_k){
+                    fprintf(arquivoSaida, "    ; Armazenando em variável global '%s'\n", tac->resultado);
+                    fprintf(arquivoSaida, "    STR %s, [R0, #%d]\n", reg_op2, simbolo->offset); //
+                }   
+                else if (simbolo->id_type == array_k){
+                    fprintf(arquivoSaida, "    ;Armazenando em array global '%s'\n", tac->op1);
+                    fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                    fprintf(arquivoSaida, "    STR %s, [Rad, #%s]\n", reg_op2, tac->resultado);
+                }    
             } else {
                 simbolo = find_symbol(tabela_simbolos, tac->op1, escopo_atual.escopo);
                 if (simbolo != NULL) {
                     if (simbolo->id_type == var_k){
-                        fprintf(arquivoSaida, "    ; Acessando variavel local '%s'\n", tac->op1);
+                        fprintf(arquivoSaida, "    ; Armazenando em variavel local '%s'\n", tac->op1);
                         fprintf(arquivoSaida, "    STR %s, [FP, #%d]\n", reg_op2, simbolo->offset);
                     }   
                     else if (simbolo->id_type == array_k){
-                        fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op1);
+                        fprintf(arquivoSaida, "    ; Armazenando array local '%s'\n", tac->op1);
                         fprintf(arquivoSaida, "    MOV Rad, FP\n");
                         fprintf(arquivoSaida, "    ADDI Rad, Rad, #%d\n", simbolo->offset);
                         fprintf(arquivoSaida, "    STR %s, [Rad, #%s]\n", reg_op2, tac->resultado);

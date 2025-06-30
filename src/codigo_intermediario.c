@@ -378,7 +378,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     break;
                 }
                 case arr_k: {
-                    char *index_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 0, 0);
+                    char *index_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 0, esq_assign);
                     
                     if (index_res) {
                         result_str = gerar_temporario();
@@ -387,7 +387,10 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                             free(index_res); 
                             return NULL; 
                         }
-                        *tac_list_ptr = criarNoTac(*tac_list_ptr, LOAD, result_str, node_tree->lexmema, index_res);
+                        if (!esq_assign) {
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, LOAD, result_str, node_tree->lexmema, index_res);
+                        }
+                        
                         if (expression_parametro){
                             *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, result_str, "", "");
                         }
