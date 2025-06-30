@@ -1,0 +1,4 @@
+NOP
+MOVI R3, #5
+MOVI R3, #6
+FINISH

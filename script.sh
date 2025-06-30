@@ -13,8 +13,8 @@ if [ ! -d "outputs" ]; then
 fi
 
 # Run the compiled program
-./compiler < test_codes/_teste_1.c > outputs/output.txt 2>&1
+# ./compiler < test_codes/_teste_1.c > outputs/output.txt 2>&1
 # ./compiler < test_codes/sort.c > outputs/output.txt 2>&1
-# ./compiler < test_codes/very_basic.c > outputs/output.txt 2>&1
+./compiler < test_codes/very_basic.c > outputs/output.txt 2>&1
 
 python Assembler/assembler.py outputs/assembly.asm > outputs/bin.txt

@@ -137,7 +137,6 @@ int count_symbol(char* name, char* scope, HashTable* symbol_table);
 void free_table(HashTable* table);
 
 //Código intermediário
-//
 enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN};
 
 typedef struct tacNo{
@@ -155,6 +154,8 @@ typedef struct tac{
     TacNo *fim;
 }Tac;
 
+
+
 // Funções principais
 Tac *criarTac(Tac *estrutura_tac);
 Tac *criarNoTac(Tac *estrutura_tac, int operacao, const char *op1, const char *op2, const char *resultado);
@@ -162,7 +163,7 @@ Tac *liberarTac(Tac *estrutura_tac);
 void imprimirTac(FILE *arqCodInterm, Tac *tac);
 
 // Função para percorrer a árvore e gerar TAC
-char* percorrer_arvore(No *node_tree, Tac **tac, int expression_parametro);
+char* percorrer_arvore(No *node_tree, Tac **tac, int expression_parametro, int esq_assign);
 void codigo_intermediario(No *node_tree, Tac *tac);
 
 // Gerador de código assembly

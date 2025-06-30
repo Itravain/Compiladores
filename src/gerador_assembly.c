@@ -96,10 +96,9 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                         }   
                         else if (simbolo->id_type == array_k){
                             fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op2);
-                            fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                            fprintf(arquivoSaida, "    MOV Rad, FP\n");
                             fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
-                            fprintf(arquivoSaida, "    ADD Rad, Rad, FP\n");
-                            fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                            fprintf(arquivoSaida, "    LDR %s, [Rad, #%d]\n", reg_op1, simbolo->offset);
                         }
                         else if (simbolo->id_type == param_k){
                             fprintf(arquivoSaida, "    ; Acessando param'%s'\n", tac->op2);
@@ -129,12 +128,13 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 if (simbolo != NULL) {
                     if (simbolo->id_type == var_k){
                         fprintf(arquivoSaida, "    ; Acessando variavel local '%s'\n", tac->op1);
-                        fprintf(arquivoSaida, "    STR %s, [Rad, #%d]\n", reg_op2, simbolo->offset);
+                        fprintf(arquivoSaida, "    STR %s, [FP, #%d]\n", reg_op2, simbolo->offset);
                     }   
                     else if (simbolo->id_type == array_k){
                         fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op1);
-                        fprintf(arquivoSaida, "    ADD Rad, Rad, FP\n");
-                        fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_op2);
+                        fprintf(arquivoSaida, "    MOV Rad, FP\n");
+                        fprintf(arquivoSaida, "    ADDI Rad, Rad, #%d\n", simbolo->offset);
+                        fprintf(arquivoSaida, "    STR %s, [Rad, #%s]\n", reg_op2, tac->resultado);
                     }
                 }
                 else {
@@ -194,8 +194,13 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             
             break;
         case PARAM:{
-            fprintf(arquivoSaida, "    STR %s [SP, #0]\n", get_reg(tac->op1));
-            fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
+            // Em chamadas de output não é necessário usar o param
+            if(strcmp(tac->proximo->op2, "output") == 0) {
+            }
+            else {
+                fprintf(arquivoSaida, "    STR %s [SP, #0]\n", get_reg(tac->op1));
+                fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
+            }
 
             break;
         }
