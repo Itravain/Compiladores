@@ -1,7 +1,13 @@
-int x[8];
-int g;
+int a;
+
+int teste(){
+    int x;
+    x = 333;
+    return x;
+}
+
 void main() {
-    x[5] = 6; 
-    g = x[5];
-    x[4] = g;
+    int s;
+    a = teste();
+    output(a);
 }

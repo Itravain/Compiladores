@@ -1,8 +1,8 @@
 void main() {
     int x;
     int y;
-    x = 2;
-    y = 4;
+    x = input();
+    y = input();
     if(x > y){
         output(x);
     }
