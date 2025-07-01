@@ -152,9 +152,9 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
 
             if (strcmp(tac->op2, "main") == 0) {
                 fprintf(arquivoSaida, "    MOV FP, SP\n");
-                fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
             }
             else {
+                fprintf(arquivoSaida, "    ADDI Rlink, Rlink, #1\n");
                 fprintf(arquivoSaida, "    STR Rlink [SP #0]\n");
                 fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
             }
@@ -183,6 +183,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 fprintf(arquivoSaida, "    MOV FP, SP\n");
                 fprintf(arquivoSaida, "    ADDI SP, SP, #1\n");
                 fprintf(arquivoSaida, "    BL %s\n", tac->op2);
+                fprintf(arquivoSaida, "    MOV %s, Rret\n", reg_op1);
             }
             
             break;
@@ -217,6 +218,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             break;
         }
         case RET: {
+            fprintf(arquivoSaida,"    MOV Rret, %s\n", reg_op1);
             fprintf(arquivoSaida,"    LDR Rlink [FP #1]\n", get_reg(tac->op1), get_reg(tac->op2));
             fprintf(arquivoSaida,"    MOV SP, FP\n", get_reg(tac->op1), get_reg(tac->op2));
             fprintf(arquivoSaida,"    LDR FP [FP #0]\n", get_reg(tac->op1), get_reg(tac->op2));
@@ -230,7 +232,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         }   
         case EQUAL:{
             fprintf(arquivoSaida, "    CMP %s, %s\n", reg_op2, reg_res);
-            fprintf(arquivoSaida, "    BNEQ %s\n", tac->proximo->op2);
+            fprintf(arquivoSaida, "    BNE %s\n", tac->proximo->op2);
             break;
         }
         case LESS:{

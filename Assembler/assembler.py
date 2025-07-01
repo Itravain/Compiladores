@@ -1,13 +1,15 @@
 import re
 import sys
 
+debugar = False
+
 class Assembler:
     import re
 
 class Assembler:
     def __init__(self):
         self.special_registers = {
-            "Rad": 25, "SP": 26, "FP": 27, "Rin": 28, 
+            "Rret": 24, "Rad": 25, "SP": 26, "FP": 27, "Rin": 28, 
             "Rout": 29, "CPSR": 30, "Rlink": 31
         }
         self.symbol_table = {}
@@ -167,9 +169,17 @@ class Assembler:
                     self._get_operand_binary(target_address, 24)  # imm24
                 ]
 
-        elif mnemonic == "BLE" or mnemonic == "BGE": # Adicione outros branches condicionais aqui
+        elif mnemonic == "BLE" or mnemonic == "BGE" or mnemonic == "BNE":
             target_label = operands[0]
-            cond_code = '1101' if mnemonic == 'BLE' else '1010' # Código de condição para BLE ou BGE
+            # Verifica condições do CPSR
+            if mnemonic == "BNE":
+                cond_code = '0001'
+            elif mnemonic == "BGE":
+                cond_code = '1010'
+            elif mnemonic == "BLE":
+                cond_code = '1101'
+            else:
+                raise ValueError(f"Condição desconhecida: {mnemonic}")
 
             if target_label.startswith("R") or target_label in self.special_registers:
                 # Branch condicional para endereço em registrador
@@ -230,7 +240,10 @@ class Assembler:
         else:
             raise ValueError(f"Tipo de Instrução desconhecido: {mnemonic}")
 
-        return "".join(final_binary)
+        if(debugar):
+            return " ".join(final_binary)
+        else:
+            return "".join(final_binary)
     
     def parse_line(self, line):
         # Ignora comentários e espaços em branco no início/fim
@@ -312,6 +325,8 @@ if __name__ == "__main__":
 
             if parsed['type'] == 'instruction':
                 binary_code = assembler.translate_instruction(parsed, address)
+                if(debugar):
+                    print(f"Instrução: {address} - {linha.strip()}")
                 print(binary_code)
                 address += 1
             elif parsed['type'] == 'label':
