@@ -72,8 +72,14 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                     fprintf(arquivoSaida, "    LDR %s, [R0, #%d]\n", reg_op1, simbolo->offset);
                 }
                 else if (simbolo->id_type == array_k) {
-                    fprintf(arquivoSaida, "    ; Acessando array global '%s'\n", tac->op2);
-                    fprintf(arquivoSaida, "    LDR %s, [%s, #%d]\n", reg_op1, reg_res, simbolo->offset);
+                    if(strcmp(reg_res, "") != 0){
+                        fprintf(arquivoSaida, "    ; Acessando array global '%s'\n", tac->op2);
+                        fprintf(arquivoSaida, "    LDR %s, [%s, #%d]\n", reg_op1, reg_res, simbolo->offset);
+                    }
+                    else{
+                        fprintf(arquivoSaida, "    ; Acessando array global em parametro '%s'\n", tac->op2);
+                        fprintf(arquivoSaida, "    MOVI %s, #%d\n", reg_op1, simbolo->offset);
+                    }
                 }   
             //Está dentro de algum escopo 
             } else {
@@ -88,10 +94,18 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                             fprintf(arquivoSaida, "    LDR %s, [FP, #%d]\n", reg_op1, simbolo->offset);
                         }   
                         else if (simbolo->id_type == array_k){
-                            fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op2);
-                            fprintf(arquivoSaida, "    MOV Rad, FP\n");
-                            fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
-                            fprintf(arquivoSaida, "    LDR %s, [Rad, #%d]\n", reg_op1, simbolo->offset);
+                            if(strcmp(reg_res, "") != 0){
+                                fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op2);
+                                fprintf(arquivoSaida, "    MOV Rad, FP\n");
+                                fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
+                                fprintf(arquivoSaida, "    LDR %s, [Rad, #%d]\n", reg_op1, simbolo->offset);
+                            }
+                            else{
+                                fprintf(arquivoSaida, "    ; Acessando parametro local '%s'\n", tac->op2);
+                                fprintf(arquivoSaida, "    MOV Rad, FP\n");
+                                fprintf(arquivoSaida, "    ADDI Rad, Rad, #%d\n", simbolo->offset);
+                                fprintf(arquivoSaida, "    MOV %s, Rad\n", reg_op1);
+                            }
                         }
                         else if (simbolo->id_type == param_k){
                             fprintf(arquivoSaida, "    ; Acessando param'%s'\n", tac->op2);

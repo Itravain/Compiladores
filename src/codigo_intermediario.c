@@ -6,6 +6,16 @@
 #define MAXLEXEME 25
 #define MAX_TEMP 24
 
+const char* get_decl_kind_as_string(DeclarationKind kind) {
+    switch (kind) {
+        case var_k: return "var";
+        case fun_k: return "function";
+        case param_k: return "param";
+        case array_k: return "array";
+        default: return "unknown";
+    }
+}
+
 const char *operacoes_nomes[] = {
     "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "IFF", "RET", "GOTO", "LAB",
     "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN"
@@ -159,7 +169,7 @@ char* gerar_label() {
     return label_name;
 }
 
-char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_parametro, int esq_assign) {
+char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, HashTable *symbol_table, int expression_parametro, int esq_assign) {
     
     if (node_tree == NULL) return NULL;
     char *result_str = NULL;
@@ -180,7 +190,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                         return NULL; 
                     }
 
-                    char *cond_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 0, 0);
+                    char *cond_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
                     //aviso de erro caso falhe a criação do nó TAC
                     if (cond_res) {
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, IFF, cond_res, label_else, "");
@@ -189,7 +199,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                         fprintf(stderr, "Erro [if_k]: A condição do IF na linha %d não produziu um resultado válido. Verifique a expressão.\n", node_tree->linha);
                     }
 
-                    res_child = percorrer_arvore(node_tree->filho[1], tac_list_ptr, 0, 0);
+                    res_child = percorrer_arvore(node_tree->filho[1], tac_list_ptr, symbol_table, 0, 0);
                     free(res_child); 
 
                     *tac_list_ptr = criarNoTac(*tac_list_ptr, GOTO, label_end, "", "");
@@ -197,7 +207,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     *tac_list_ptr = criarNoTac(*tac_list_ptr, LAB, label_else, "", "");
                     
                     if (node_tree->filho[2]) {
-                        res_child = percorrer_arvore(node_tree->filho[2], tac_list_ptr, 0, 0);
+                        res_child = percorrer_arvore(node_tree->filho[2], tac_list_ptr, symbol_table, 0, 0);
                         free(res_child); 
                     }
 
@@ -219,7 +229,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
 
                     *tac_list_ptr = criarNoTac(*tac_list_ptr, LAB, label_start, "", "");
 
-                    char *cond_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr,0, 0);
+                    char *cond_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
                     if (cond_res) {
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, IFF, cond_res, label_end, "");
                         free(cond_res);
@@ -227,7 +237,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                         fprintf(stderr, "Erro [while_k]: A condição do WHILE na linha %d não produziu um resultado válido. Verifique a expressão.\n", node_tree->linha);
                     }
 
-                    res_child = percorrer_arvore(node_tree->filho[1], tac_list_ptr,0, 0);
+                    res_child = percorrer_arvore(node_tree->filho[1], tac_list_ptr, symbol_table, 0, 0);
                     free(res_child);
                     *tac_list_ptr = criarNoTac(*tac_list_ptr, GOTO, label_start, "", "");
 
@@ -239,7 +249,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                 }
                 case return_k:
                     if (node_tree->filho[0]) {
-                        char *ret_val = percorrer_arvore(node_tree->filho[0], tac_list_ptr,0, 0);
+                        char *ret_val = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
                         if (ret_val) {
                             *tac_list_ptr = criarNoTac(*tac_list_ptr, RET, ret_val, "", "");
                             free(ret_val);
@@ -252,7 +262,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     result_str = NULL;
                     break;
                 default:
-                    res_child = percorrer_arvore(node_tree->filho[0], tac_list_ptr,0, 0);
+                    res_child = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
                     free(res_child);
                     result_str = NULL;
                     break;
@@ -263,8 +273,8 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
         case expression_k: {
             switch (node_tree->kind_union.expr) {
                 case op_k: {
-                    char *res1 = percorrer_arvore(node_tree->filho[0], tac_list_ptr,0, 0);
-                    char *res2 = percorrer_arvore(node_tree->filho[1], tac_list_ptr,0, 0);
+                    char *res1 = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
+                    char *res2 = percorrer_arvore(node_tree->filho[1], tac_list_ptr, symbol_table, 0, 0);
                     
                     if (res1 && res2) {
                         result_str = gerar_temporario();
@@ -307,13 +317,26 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                 case constant_k:
                 case id_k: {
                     char *tmp = gerar_temporario();
+                    
                     if (tmp != NULL) {
                         if (!esq_assign) {
                             *tac_list_ptr = criarNoTac(*tac_list_ptr, LOAD, tmp, node_tree->lexmema, "");
                         }
                         
                         if (expression_parametro){
-                            *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, tmp, "", "");
+                            Symbol *simbolo = find_symbol(symbol_table, node_tree->lexmema, escopo);
+                            if (simbolo == NULL) {
+                                simbolo = find_symbol(symbol_table, node_tree->lexmema, "GLOBAL");
+                            }
+
+                            if (simbolo != NULL) {
+                                const char* tipo_string = get_decl_kind_as_string(simbolo->id_type);
+                                *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, tmp, tipo_string, "");
+                            }
+                            else {
+                                // Números inteiros
+                                *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, tmp, "var", "");
+                            }
                         }
                         
                         result_str = strdup(tmp);  
@@ -326,8 +349,8 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     break;
                 }
                 case assign_k: {
-                    char *lhs_name = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 0, 1);
-                    char *rhs_res = percorrer_arvore(node_tree->filho[1], tac_list_ptr, 0, 0);
+                    char *lhs_name = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 1);
+                    char *rhs_res = percorrer_arvore(node_tree->filho[1], tac_list_ptr, symbol_table, 0, 0);
 
                     if (rhs_res && lhs_name) {
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, ASSIGN, lhs_name, rhs_res, "");
@@ -353,7 +376,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     int num_params = 0;
                     No* param_node = node_tree->filho[0];
                     
-                    char *tmp = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 1, 0);
+                    char *tmp = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 1, 0);
             
                     while(param_node != NULL) {
                         num_params++;
@@ -375,7 +398,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     break;
                 }
                 case arr_k: {
-                    char *index_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 0, esq_assign);
+                    char *index_res = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, esq_assign);
                     
                     if (index_res) {
                         result_str = gerar_temporario();
@@ -389,7 +412,8 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                         }
                         
                         if (expression_parametro){
-                            *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, result_str, "string", "");
+                            //Acesso índice do array
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, result_str, "var", "");
                         }
                         free(index_res);
                     } else {
@@ -426,7 +450,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     }
                     for (int i = 0; i < NUMMAXFILHOS; i++) {
                         if (node_tree->filho[i]) {
-                            res_child = percorrer_arvore(node_tree->filho[i], tac_list_ptr, 0, 0);
+                            res_child = percorrer_arvore(node_tree->filho[i], tac_list_ptr, symbol_table, 0, 0);
                             free(res_child);
                         }
                     }
@@ -443,7 +467,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     break;
 
                 case var_k:
-                    res_child = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 0, 0);
+                    res_child = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
                     if (strcmp(node_tree->lexmema, "int") !=0 && strcmp(node_tree->lexmema, "void") != 0)
                     {
                         *tac_list_ptr = criarNoTac(*tac_list_ptr, ALLOC, node_tree->lexmema, escopo, "");
@@ -476,9 +500,12 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
     }
 
     if(node_tree->irmao) {
-        char *sibling_res = percorrer_arvore(node_tree->irmao, tac_list_ptr, expression_parametro, 0);
+        char *sibling_res = percorrer_arvore(node_tree->irmao, tac_list_ptr, symbol_table, expression_parametro, 0);
         free(sibling_res);
     }
 
     return result_str;
 }
+
+
+
