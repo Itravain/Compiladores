@@ -46,206 +46,218 @@ class Assembler:
         mnemonic = parsed_line['mnemonic']
         operands = parsed_line['operands']
 
-        if mnemonic == "ADD":
-            final_binary = [
-                '1110', '00', '0', '0101', '0',
-                self._get_operand_binary(operands[1]),  # rn
-                self._get_operand_binary(operands[0]),  # rd
-                self._get_operand_binary(operands[2]),  # rm
-                '00000'
-            ]
-        elif mnemonic == "ADDI":
-            final_binary = [
-                '1110', '00', '1', '0101', '0',
-                self._get_operand_binary(operands[1]),  # rn
-                self._get_operand_binary(operands[0]),  # rd
-                self._get_operand_binary(operands[2], 10)  # imm
-            ]
-        elif mnemonic == "SUB":
-            final_binary = [
-                '1110', '00', '0', '0011', '0',
-                self._get_operand_binary(operands[1]),  # rn
-                self._get_operand_binary(operands[0]),  # rd
-                self._get_operand_binary(operands[2]),  # rm
-                '00000'
-            ]
-        elif mnemonic == "SUBI":
-            final_binary = [
-                '1110', '00', '1', '0011', '0',
-                self._get_operand_binary(operands[1]),  # rn
-                self._get_operand_binary(operands[0]),  # rd
-                self._get_operand_binary(operands[2], 10)  # imm
-            ]
-        elif mnemonic == "MUL":
-            final_binary = [
-                '1110', '00', '0', '1110', '0',
-                self._get_operand_binary(operands[1]),  # rn
-                self._get_operand_binary(operands[0]),  # rd
-                self._get_operand_binary(operands[2]),  # rm
-                '00000'
-            ]
-        elif mnemonic == "AND":
-            final_binary = [
-                '1110', '00', '0', '0001', '0',
-                self._get_operand_binary(operands[1]),  # rn
-                self._get_operand_binary(operands[0]),  # rd
-                self._get_operand_binary(operands[2]),  # rm
-                '00000'
-            ]
-        elif mnemonic == "ANDI":
-            final_binary = [
-                '1110', '00', '1', '0001', '0',
-                self._get_operand_binary(operands[1]),  # rn
-                self._get_operand_binary(operands[0]),  # rd
-                self._get_operand_binary(operands[2], 10)  # imm
-            ]
-        elif mnemonic == "ORR":
-            final_binary = [
-                '1110', '00', '0', '1100', '0',
-                self._get_operand_binary(operands[1]),  # rn
-                self._get_operand_binary(operands[0]),  # rd
-                self._get_operand_binary(operands[2]),  # rm
-                '00000'
-            ]
-        elif mnemonic == "ORRI":
-            final_binary = [
-                '1110', '00', '1', '1100', '0',
-                self._get_operand_binary(operands[1]),  # rn
-                self._get_operand_binary(operands[0]),  # rd
-                self._get_operand_binary(operands[2], 10)  # imm
-            ]
-        elif mnemonic == "MOV":
-            final_binary = [
-                '1110', '00', '1', '1101', '0',
-                self._get_operand_binary(operands[1]),  # rm
-                self._get_operand_binary(operands[0]),  # rd
-                '00000',  # rn não usado
-                '00000'
-            ]
-        elif mnemonic == "MOVI":
-            final_binary = [
-                '1110', '00', '1', '1101', '0',
-                '00000',  # rn não usado
-                self._get_operand_binary(operands[0]),  # rd
-                self._get_operand_binary(operands[1], 10)  # imm
-            ]
-        elif mnemonic == "LDR":
-            # Exemplo: LDR R1, [R2, #4] -> operands = ['R1', 'R2', 4]
-            final_binary = [
-                '1110', '01', '1', '0', '1',
-                self._get_operand_binary(operands[1], 5),  # rn (base)
-                self._get_operand_binary(operands[0], 5),  # rd (dest)
-                self._get_operand_binary(operands[2], 13)  # imm
-            ]
-        elif mnemonic == "STR":
-            # Exemplo: STR R1, [R2, #4] -> operands = ['R1', 'R2', 4]
-            final_binary = [
-                '1110', '01', '1', '0', '0',
-                self._get_operand_binary(operands[1], 5),  # rn (base)
-                self._get_operand_binary(operands[0], 5),  # rm (src)
-                self._get_operand_binary(operands[2], 13)  # imm
-            ]
+        try:
+            if mnemonic == "ADD":
+                final_binary = [
+                    '1110', '00', '0', '0101', '0',
+                    self._get_operand_binary(operands[1]),  # rn
+                    self._get_operand_binary(operands[0]),  # rd
+                    self._get_operand_binary(operands[2]),  # rm
+                    '00000'
+                ]
+            elif mnemonic == "ADDI":
+                final_binary = [
+                    '1110', '00', '1', '0101', '0',
+                    self._get_operand_binary(operands[1]),  # rn
+                    self._get_operand_binary(operands[0]),  # rd
+                    self._get_operand_binary(operands[2], 10)  # imm
+                ]
+            elif mnemonic == "SUB":
+                final_binary = [
+                    '1110', '00', '0', '0011', '0',
+                    self._get_operand_binary(operands[1]),  # rn
+                    self._get_operand_binary(operands[0]),  # rd
+                    self._get_operand_binary(operands[2]),  # rm
+                    '00000'
+                ]
+            elif mnemonic == "SUBI":
+                final_binary = [
+                    '1110', '00', '1', '0011', '0',
+                    self._get_operand_binary(operands[1]),  # rn
+                    self._get_operand_binary(operands[0]),  # rd
+                    self._get_operand_binary(operands[2], 10)  # imm
+                ]
+            elif mnemonic == "MUL":
+                final_binary = [
+                    '1110', '00', '0', '1110', '0',
+                    self._get_operand_binary(operands[1]),  # rn
+                    self._get_operand_binary(operands[0]),  # rd
+                    self._get_operand_binary(operands[2]),  # rm
+                    '00000'
+                ]
+            elif mnemonic == "AND":
+                final_binary = [
+                    '1110', '00', '0', '0001', '0',
+                    self._get_operand_binary(operands[1]),  # rn
+                    self._get_operand_binary(operands[0]),  # rd
+                    self._get_operand_binary(operands[2]),  # rm
+                    '00000'
+                ]
+            elif mnemonic == "ANDI":
+                final_binary = [
+                    '1110', '00', '1', '0001', '0',
+                    self._get_operand_binary(operands[1]),  # rn
+                    self._get_operand_binary(operands[0]),  # rd
+                    self._get_operand_binary(operands[2], 10)  # imm
+                ]
+            elif mnemonic == "ORR":
+                final_binary = [
+                    '1110', '00', '0', '1100', '0',
+                    self._get_operand_binary(operands[1]),  # rn
+                    self._get_operand_binary(operands[0]),  # rd
+                    self._get_operand_binary(operands[2]),  # rm
+                    '00000'
+                ]
+            elif mnemonic == "ORRI":
+                final_binary = [
+                    '1110', '00', '1', '1100', '0',
+                    self._get_operand_binary(operands[1]),  # rn
+                    self._get_operand_binary(operands[0]),  # rd
+                    self._get_operand_binary(operands[2], 10)  # imm
+                ]
+            elif mnemonic == "MOV":
+                final_binary = [
+                    '1110', '00', '1', '1101', '0',
+                    self._get_operand_binary(operands[1]),  # rm
+                    self._get_operand_binary(operands[0]),  # rd
+                    '00000',  # rn não usado
+                    '00000'
+                ]
+            elif mnemonic == "MOVI":
+                final_binary = [
+                    '1110', '00', '1', '1101', '0',
+                    '00000',  # rn não usado
+                    self._get_operand_binary(operands[0]),  # rd
+                    self._get_operand_binary(operands[1], 10)  # imm
+                ]
+            elif mnemonic == "LDR":
+                # Exemplo: LDR R1, [R2, #4] -> operands = ['R1', 'R2', 4]
+                final_binary = [
+                    '1110', '01', '1', '0', '1',
+                    self._get_operand_binary(operands[1], 5),  # rn (base)
+                    self._get_operand_binary(operands[0], 5),  # rd (dest)
+                    self._get_operand_binary(operands[2], 13)  # imm
+                ]
+            elif mnemonic == "STR":
+                # Exemplo: STR R1, [R2, #4] -> operands = ['R1', 'R2', 4]
+                final_binary = [
+                    '1110', '01', '1', '0', '0',
+                    self._get_operand_binary(operands[1], 5),  # rn (base)
+                    self._get_operand_binary(operands[0], 5),  # rm (src)
+                    self._get_operand_binary(operands[2], 13)  # imm
+                ]
         
-        # Lógica de salto para B e BL usando endereço absoluto.
-        elif mnemonic == "B" or mnemonic == "BL":
-            target_label = operands[0]
-            
-            # Se o operando for um registrador, mantenha a lógica antiga (salto para endereço em registrador).
-            if target_label.startswith("R") or target_label in self.special_registers:
-                link_bit = '1' if mnemonic == 'BL' else '0'
-                final_binary = [
-                    '1110', '10', '0', link_bit,
-                    self._get_operand_binary(target_label),  # rn
-                    '0'*19
-                ]
-            # Se for um label, use o endereço absoluto da tabela de símbolos.
-            else:
-                # Obtém o endereço absoluto (número da instrução) do label.
-                target_address = self.symbol_table[target_label]
+            # Lógica de salto para B e BL usando endereço absoluto.
+            elif mnemonic == "B" or mnemonic == "BL":
+                target_label = operands[0]
                 
-                link_bit = '1' if mnemonic == 'BL' else '0'
-                # Formato para Branch com Imediato (endereço absoluto)
-                final_binary = [
-                    '1110', '10', '1', link_bit,
-                    self._get_operand_binary(target_address, 24)  # imm24
-                ]
+                # Se o operando for um registrador, mantenha a lógica antiga (salto para endereço em registrador).
+                if target_label.startswith("R") or target_label in self.special_registers:
+                    link_bit = '1' if mnemonic == 'BL' else '0'
+                    final_binary = [
+                        '1110', '10', '0', link_bit,
+                        self._get_operand_binary(target_label),  # rn
+                        '0'*19
+                    ]
+                # Se for um label, use o endereço absoluto da tabela de símbolos.
+                else:
+                    # Obtém o endereço absoluto (número da instrução) do label.
+                    target_address = self.symbol_table[target_label]
+                    
+                    link_bit = '1' if mnemonic == 'BL' else '0'
+                    # Formato para Branch com Imediato (endereço absoluto)
+                    final_binary = [
+                        '1110', '10', '1', link_bit,
+                        self._get_operand_binary(target_address, 24)  # imm24
+                    ]
 
-        elif mnemonic == "BLE" or mnemonic == "BGE" or mnemonic == "BNE":
-            target_label = operands[0]
-            # Verifica condições do CPSR
-            if mnemonic == "BNE":
-                cond_code = '0001'
-            elif mnemonic == "BGE":
-                cond_code = '1010'
-            elif mnemonic == "BLE":
-                cond_code = '1101'
-            else:
-                raise ValueError(f"Condição desconhecida: {mnemonic}")
+            elif mnemonic == "BLE" or mnemonic == "BGE" or mnemonic == "BNE":
+                target_label = operands[0]
+                # Verifica condições do CPSR
+                if mnemonic == "BNE":
+                    cond_code = '0001'
+                elif mnemonic == "BGE":
+                    cond_code = '1010'
+                elif mnemonic == "BLE":
+                    cond_code = '1101'
+                else:
+                    raise ValueError(f"Condição desconhecida: {mnemonic}")
 
-            if target_label.startswith("R") or target_label in self.special_registers:
-                # Branch condicional para endereço em registrador
-                final_binary = [
-                    cond_code, '10', '0', '0',
-                    self._get_operand_binary(target_label),
-                    '0'*19
-                ]
-            else:
-                # Branch condicional para endereço em label (imediato)
-                target_address = self.symbol_table[target_label]
-                final_binary = [
-                    cond_code, '10', '1', '0', # L=0 para branches condicionais
-                    self._get_operand_binary(target_address, 24)
-                ]
+                if target_label.startswith("R") or target_label in self.special_registers:
+                    # Branch condicional para endereço em registrador
+                    final_binary = [
+                        cond_code, '10', '0', '0',
+                        self._get_operand_binary(target_label),
+                        '0'*19
+                    ]
+                else:
+                    # Branch condicional para endereço em label (imediato)
+                    target_address = self.symbol_table[target_label]
+                    final_binary = [
+                        cond_code, '10', '1', '0', # L=0 para branches condicionais
+                        self._get_operand_binary(target_address, 24)
+                    ]
     
 
-        elif mnemonic == "BI":
-            # Exemplo: BI #42
-            final_binary = [
-                '1110', '10', '1', '0',
-                self._get_operand_binary(operands[0], 24)  # imm
-            ]
-        elif mnemonic == "NOP":
-            final_binary = ['1110', '11', '000', '0'*23]
-        elif mnemonic == "IN":
-            final_binary = ['1110', '11', '001', '0'*23]
-        elif mnemonic == "OUT":
-            final_binary = ['1110', '11', '010', '0'*23]
-        elif mnemonic == "FINISH":
-            final_binary = ['1110', '11', '011', '0'*23]
-        elif mnemonic == "CMP":
-            # Formato: Cond[31:28] 00 0 0111 1 Rn[19:15] xxxxx Rm[9:5] xxxxx
-            final_binary = [
-                '1110', '00', '0', '1010', '1',
-                self._get_operand_binary(operands[0]),  # rn
-                '00000',                               # rd não usado
-                self._get_operand_binary(operands[1]), # rm
-                '00000'                                # xxxxx
-            ]
-        elif mnemonic == "UDIV":
-            # Formato: Cond[31:28] 00 0 1011 0 Rn[19:15] Rd[14:10] Rm[9:5] xxxxx
-            final_binary = [
-                '1110', '00', '0', '1111', '0',
-                self._get_operand_binary(operands[1]),  # rn
-                self._get_operand_binary(operands[0]),  # rd
-                self._get_operand_binary(operands[2]),  # rm
-                '00000'                                 # xxxxx
-            ]
-        elif mnemonic == "UDIVI":
-            # Formato: Cond[31:28] 00 0 1011 0 Rn[19:15] Rd[14:10] Rm[9:5] xxxxx
-            final_binary = [
-                '1110', '00', '1', '1111', '0',
-                self._get_operand_binary(operands[1]),  # rn
-                self._get_operand_binary(operands[0]),  # rd
-                self._get_operand_binary(operands[2], 10)  # imm
-            ]
-        else:
-            raise ValueError(f"Tipo de Instrução desconhecido: {mnemonic}")
+            elif mnemonic == "BI":
+                # Exemplo: BI #42
+                final_binary = [
+                    '1110', '10', '1', '0',
+                    self._get_operand_binary(operands[0], 24)  # imm
+                ]
+            elif mnemonic == "NOP":
+                final_binary = ['1110', '11', '000', '0'*23]
+            elif mnemonic == "IN":
+                final_binary = ['1110', '11', '001', '0'*23]
+            elif mnemonic == "OUT":
+                final_binary = ['1110', '11', '010', '0'*23]
+            elif mnemonic == "FINISH":
+                final_binary = ['1110', '11', '011', '0'*23]
+            elif mnemonic == "CMP":
+                # Formato: Cond[31:28] 00 0 0111 1 Rn[19:15] xxxxx Rm[9:5] xxxxx
+                final_binary = [
+                    '1110', '00', '0', '1010', '1',
+                    self._get_operand_binary(operands[0]),  # rn
+                    '00000',                               # rd não usado
+                    self._get_operand_binary(operands[1]), # rm
+                    '00000'                                # xxxxx
+                ]
+            elif mnemonic == "UDIV":
+                # Formato: Cond[31:28] 00 0 1011 0 Rn[19:15] Rd[14:10] Rm[9:5] xxxxx
+                final_binary = [
+                    '1110', '00', '0', '1111', '0',
+                    self._get_operand_binary(operands[1]),  # rn
+                    self._get_operand_binary(operands[0]),  # rd
+                    self._get_operand_binary(operands[2]),  # rm
+                    '00000'                                 # xxxxx
+                ]
+            elif mnemonic == "UDIVI":
+                # Formato: Cond[31:28] 00 0 1011 0 Rn[19:15] Rd[14:10] Rm[9:5] xxxxx
+                final_binary = [
+                    '1110', '00', '1', '1111', '0',
+                    self._get_operand_binary(operands[1]),  # rn
+                    self._get_operand_binary(operands[0]),  # rd
+                    self._get_operand_binary(operands[2], 10)  # imm
+                ]
+            else:
+                # Erro para mnemônico não reconhecido
+                raise ValueError(f"Instrução desconhecida ou não implementada: '{mnemonic}'")
 
-        if(debugar):
-            return " ".join(final_binary)
-        else:
-            return "".join(final_binary)
-    
+            if(debugar):
+                return " ".join(final_binary)
+            else:
+                return "".join(final_binary)
+
+        except IndexError:
+            # Captura erros como ADD R1, R2 (faltando um operando)
+            raise ValueError(f"[Linha {current_address}] Erro de Sintaxe: Número incorreto de operandos para a instrução '{mnemonic}'. Recebido: {operands}")
+        except KeyError as e:
+            # Captura erros como B L_inexistente (label não encontrado na tabela)
+            raise ValueError(f"[Linha {current_address}] Erro de Semântica: Label não definido '{e.args[0]}' usado na instrução '{mnemonic}'.")
+        except Exception as e:
+            # Captura outros erros e os relata com contexto
+            raise RuntimeError(f"[Linha {current_address}] Erro inesperado ao traduzir '{mnemonic} {operands}': {e}")
+
     def parse_line(self, line):
         # Ignora comentários e espaços em branco no início/fim
         line = line.split(';')[0].strip()
@@ -304,36 +316,38 @@ if __name__ == "__main__":
     arquivo = sys.argv[1]
     assembler = Assembler()
     
-# Construir tabela de simbolos
+    # Primeira Passagem: Construir tabela de símbolos
     address = 0
+    linhas_codigo = []
     with open(arquivo, 'r') as f:
-        for linha in f:
+        for i, linha in enumerate(f, 1):
             parsed = assembler.parse_line(linha)
             if not parsed:
                 continue
+            
+            # Armazena a linha parseada com seu número original para mensagens de erro
+            parsed['line_num'] = i
+            linhas_codigo.append(parsed)
+
             if parsed['type'] == 'label':
+                if parsed['name'] in assembler.symbol_table:
+                    print(f"Aviso: Label '{parsed['name']}' redefinido na linha {i}.")
                 assembler.symbol_table[parsed['name']] = address
             elif parsed['type'] == 'instruction':
-                address += 1 # Cada instrução ocupa 1 "espaço" de memória
+                address += 1
 
-# Gerar código binário
+    # Segunda Passagem: Gerar código binário
     address = 0
-    with open(arquivo, 'r') as f:
-        for linha in f:
-            parsed = assembler.parse_line(linha)
-            if not parsed:
-                continue
-
-            if parsed['type'] == 'instruction':
+    for parsed in linhas_codigo:
+        if parsed['type'] == 'instruction':
+            try:
                 binary_code = assembler.translate_instruction(parsed, address)
                 if(debugar):
-                    print(f"{address}: {linha.strip()}")
-                    print(f"\t{binary_code}")
+                    print(f"Endereço[{address}] (Linha {parsed['line_num']}): {parsed['mnemonic']} {parsed['operands']}")
+                    print(f"\tBinário: {binary_code}")
                 else:
                     print(binary_code)
-                    
                 address += 1
-            elif parsed['type'] == 'label':
-                # A label é usada apenas para a tabela de símbolos na primeira passagem.
-                # Na segunda passagem, ela é ignorada para não aparecer na saída final.
-                pass
+            except Exception as e:
+                print(f"ERRO FATAL: {e}", file=sys.stderr)
+                sys.exit(1)
