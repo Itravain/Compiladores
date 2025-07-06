@@ -102,6 +102,7 @@ void print_node(FILE *file, No *node){
                 case var_k: kind_union_str = "variable"; break;
                 case fun_k: kind_union_str = "function"; break;
                 case param_k: kind_union_str = "parameter"; break;
+                case param_array_k: kind_union_str = "parameter_array"; break;
                 case array_k: kind_union_str = "array"; break;
                 case unknown_k: kind_union_str = "unknown"; break;
                 default: kind_union_str = "unknown_declaration"; break;

@@ -154,7 +154,7 @@ param:
       }
     | tipo_especificador T_ID T_LBRACKET T_RBRACKET {
         $$ = $1;
-        YYSTYPE aux = create_node(yylinenum, id_lexema, declaration_k, param_k);
+        YYSTYPE aux = create_node(yylinenum, id_lexema, declaration_k, param_array_k);
         add_filho($$, aux);
     }
 ;

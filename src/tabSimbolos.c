@@ -114,6 +114,11 @@ void iterate_tree(No* root, HashTable* symbol_table) {
                     new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, 1, atualizar_offset(scope, 1, 1));
                     break;
                 
+                case param_array_k:
+                    // Parâmetro de função: int x
+                    new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, 1, atualizar_offset(scope, 1, 1));
+                    break;
+                
                 default:
                     // Tipo de declaração desconhecido ou não aplicável
                     break;

@@ -55,12 +55,10 @@ void free_stack(Pilha *p);
 
 
 // Árvore de sintaxe abstrata
-
-
 typedef enum {statement_k, expression_k, declaration_k} NodeKind;
 typedef enum {if_k, while_k, return_k, break_k, continue_k, expression_statement_k} StatementKind;
 typedef enum {op_k, constant_k, id_k, type_k, arr_k, ativ_k, assign_k, parametro_exp_t} ExpressionKind;
-typedef enum {var_k, fun_k, param_k, array_k, unknown_k} DeclarationKind;
+typedef enum {var_k, fun_k, param_k, param_array_k, array_k, unknown_k} DeclarationKind;
 
 typedef struct no
 {
@@ -163,7 +161,7 @@ Tac *liberarTac(Tac *estrutura_tac);
 void imprimirTac(FILE *arqCodInterm, Tac *tac);
 
 // Função para percorrer a árvore e gerar TAC
-char* percorrer_arvore(No *node_tree, Tac **tac, int expression_parametro, int esq_assign);
+char* percorrer_arvore(No *node_tree, Tac **tac, HashTable *symbol_table ,int expression_parametro, int esq_assign);
 void codigo_intermediario(No *node_tree, Tac *tac);
 
 // Gerador de código assembly
