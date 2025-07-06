@@ -41,15 +41,15 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             break;
         case SUB:
             // Ex: (SUB, t2, t0, t1) -> SUB R2, R0, R1
-            fprintf(arquivoSaida, "    SUB %s, %s, %s\n", reg_res, reg_op1, reg_op2);
+            fprintf(arquivoSaida, "    SUB %s, %s, %s\n",  reg_op1, reg_op2, reg_res);
             break;
         case MUL:
             // Ex: (MUL, t1, t0, t2) -> MUL R1, R0, R2
-            fprintf(arquivoSaida, "    MUL %s, %s, %s\n", reg_res, reg_op1, reg_op2);
+            fprintf(arquivoSaida, "    MUL %s, %s, %s\n",  reg_op1,  reg_op2, reg_res);
             break;
         case DIV:
             // Ex: (DIV, t1, t0, t2) -> UDIV R1, R0, R2
-            fprintf(arquivoSaida, "    UDIV %s, %s, %s\n", reg_res, reg_op1, reg_op2);
+            fprintf(arquivoSaida, "    UDIV %s, %s, %s\n",  reg_op1, reg_op2, reg_res);
             break;
         case LAB:
             // Ex: (LAB, L1, , ) -> L1:

@@ -16,7 +16,8 @@ fi
 # ./compiler < test_codes/_teste_1.c > outputs/output.txt 2>&1
 # ./compiler < test_codes/_teste_2.c > outputs/output.txt 2>&1
 # ./compiler < test_codes/_teste_3.c > outputs/output.txt 2>&1
-./compiler < test_codes/gcd.c > outputs/output.txt 2>&1
+./compiler < test_codes/_teste_4.c > outputs/output.txt 2>&1
+# ./compiler < test_codes/gcd.c > outputs/output.txt 2>&1
 # ./compiler < test_codes/sort.c > outputs/output.txt 2>&1
 # ./compiler < test_codes/very_basic.c > outputs/output.txt 2>&1
 

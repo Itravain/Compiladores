@@ -354,9 +354,6 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                     No* param_node = node_tree->filho[0];
                     
                     char *tmp = percorrer_arvore(node_tree->filho[0], tac_list_ptr, 1, 0);
-                    if (expression_parametro){
-                            *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, tmp, "", "");
-                        }
             
                     while(param_node != NULL) {
                         num_params++;
@@ -392,7 +389,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, int expression_paramet
                         }
                         
                         if (expression_parametro){
-                            *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, result_str, "", "");
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, result_str, "string", "");
                         }
                         free(index_res);
                     } else {

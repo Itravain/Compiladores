@@ -1,6 +1,7 @@
 import re
 import sys
 
+debugar = True
 debugar = False
 
 class Assembler:
@@ -326,8 +327,11 @@ if __name__ == "__main__":
             if parsed['type'] == 'instruction':
                 binary_code = assembler.translate_instruction(parsed, address)
                 if(debugar):
-                    print(f"Instrução: {address} - {linha.strip()}")
-                print(binary_code)
+                    print(f"{address}: {linha.strip()}")
+                    print(f"\t{binary_code}")
+                else:
+                    print(binary_code)
+                    
                 address += 1
             elif parsed['type'] == 'label':
                 # A label é usada apenas para a tabela de símbolos na primeira passagem.
