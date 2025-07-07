@@ -349,26 +349,42 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, HashTable *symbol_tabl
                     break;
                 }
                 case assign_k: {
-                    char *lhs_name = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 1);
+                    // CORREÇÃO: A lógica foi reestruturada para lidar com arrays corretamente.
+                    
+                    // 1. Processa o lado direito da atribuição (o valor a ser armazenado).
                     char *rhs_res = percorrer_arvore(node_tree->filho[1], tac_list_ptr, symbol_table, 0, 0);
 
-                    if (rhs_res && lhs_name) {
-                        *tac_list_ptr = criarNoTac(*tac_list_ptr, ASSIGN, lhs_name, rhs_res, "");
-                        if (node_tree->filho[0]->kind_union.expr == arr_k) {
-                            *tac_list_ptr = criarNoTac(*tac_list_ptr, STORE, node_tree->filho[0]->lexmema, lhs_name, node_tree->filho[0]->filho[0]->lexmema);
+                    // 2. Verifica se o lado esquerdo é um array ou uma variável simples.
+                    if (node_tree->filho[0]->kind_union.expr == arr_k) {
+                        // Lado esquerdo é um array (ex: vet[i] = ...)
+                        
+                        // 2a. Processa a expressão do índice para obter o registrador temporário.
+                        char *index_res = percorrer_arvore(node_tree->filho[0]->filho[0], tac_list_ptr, symbol_table, 0, 0);
+
+                        if (rhs_res && index_res) {
+                            // Gera a instrução STORE usando o nome do array, o valor (em rhs_res) e o índice (em index_res).
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, STORE, node_tree->filho[0]->lexmema, index_res, rhs_res);
+                            result_str = strdup(rhs_res); // O resultado de uma atribuição é o próprio valor atribuído.
+                        } else {
+                            fprintf(stderr, "Erro [assign_k]: Atribuição de array inválida na linha %d. Índice ou valor nulo.\n", node_tree->linha);
+                            result_str = NULL;
                         }
-                        else {
-                            *tac_list_ptr = criarNoTac(*tac_list_ptr, STORE, node_tree->filho[0]->lexmema, lhs_name, "");
-                        }
-                        
-                        result_str = strdup(lhs_name);
-                        
-                        
+                        free(index_res);
+
                     } else {
-                        fprintf(stderr, "Erro [assign_k]: Atribuição inválida na linha %d. Lado esquerdo ou direito produziu resultado nulo.\n", 
-                                node_tree->linha);
-                        result_str = NULL;
+                        // Lado esquerdo é uma variável simples (ex: x = ...)
+                        char *lhs_name = node_tree->filho[0]->lexmema; // O nome da variável já é o destino.
+
+                        if (rhs_res && lhs_name) {
+                            // Gera a instrução STORE para a variável.
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, STORE, lhs_name, "", rhs_res);
+                            result_str = strdup(rhs_res);
+                        } else {
+                            fprintf(stderr, "Erro [assign_k]: Atribuição de variável inválida na linha %d. Valor nulo.\n", node_tree->linha);
+                            result_str = NULL;
+                        }
                     }
+                    
                     free(rhs_res);
                     break;
                 }

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "../globals.h"
 
 Escopo escopo_atual;
@@ -20,6 +21,20 @@ char* get_reg(const char *temp_name) {
     return reg_name;
 }
 int primeira_funcao = 0;
+
+//Verifica se uma string contém apenas dígitos.
+int is_numeric(const char *str) {
+    if (str == NULL || *str == '\0') {
+        return 0; // String nula ou vazia não é numérica.
+    }
+    while (*str) {
+        if (!isdigit(*str)) {
+            return 0; // Encontrou um caractere que não é dígito.
+        }
+        str++;
+    }
+    return 1; // Todos os caracteres são dígitos.
+}
 
 
 void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabela_simbolos) {
@@ -66,23 +81,21 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         case LOAD: {
             // Verifica se a variável (tac->op1) é global
             Symbol* simbolo = find_symbol(tabela_simbolos, tac->op2, "GLOBAL");
-            if (simbolo != NULL) {
+            if (simbolo != NULL) { // É global
                 if (simbolo->id_type == var_k) {
                     fprintf(arquivoSaida, "    ; Acessando variável global '%s'\n", tac->op2);
                     fprintf(arquivoSaida, "    LDR %s, [R0, #%d]\n", reg_op1, simbolo->offset);
                 }
                 else if (simbolo->id_type == array_k) {
-                    if(strcmp(reg_res, "") != 0){
-                        fprintf(arquivoSaida, "    ; Acessando array global '%s'\n", tac->op2);
-                        fprintf(arquivoSaida, "    LDR %s, [%s, #%d]\n", reg_op1, reg_res, simbolo->offset);
-                    }
-                    else{
-                        fprintf(arquivoSaida, "    ; Acessando array global em parametro '%s'\n", tac->op2);
-                        fprintf(arquivoSaida, "    MOVI %s, #%d\n", reg_op1, simbolo->offset);
-                    }
-                }   
-            //Está dentro de algum escopo 
-            } else {
+                    fprintf(arquivoSaida, "    ; Acessando array global '%s'\n", tac->op2);
+                    // 1. Carrega o endereço base do array global em Rad
+                    fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                    // 2. Adiciona o deslocamento (índice, que está em reg_res) ao endereço base
+                    fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
+                    // 3. Carrega o valor do endereço final no registrador de destino (reg_op1)
+                    fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                }
+            } else { // Não é global, procura no escopo local
                 if ( (atoi(tac->op2) != 0) || (strcmp(tac->op2, "0") == 0) ) {
                     fprintf(arquivoSaida, "    MOVI %s, #%s\n", reg_op1, tac->op2);
                 }
@@ -94,23 +107,31 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                             fprintf(arquivoSaida, "    LDR %s, [FP, #%d]\n", reg_op1, simbolo->offset);
                         }   
                         else if (simbolo->id_type == array_k){
-                            if(strcmp(reg_res, "") != 0){
-                                fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op2);
-                                fprintf(arquivoSaida, "    MOV Rad, FP\n");
-                                fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
-                                fprintf(arquivoSaida, "    LDR %s, [Rad, #%d]\n", reg_op1, simbolo->offset);
-                            }
-                            else{
-                                fprintf(arquivoSaida, "    ; Acessando parametro local '%s'\n", tac->op2);
-                                fprintf(arquivoSaida, "    MOV Rad, FP\n");
-                                fprintf(arquivoSaida, "    ADDI Rad, Rad, #%d\n", simbolo->offset);
-                                fprintf(arquivoSaida, "    MOV %s, Rad\n", reg_op1);
-                            }
+                            fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op2);
+                            // 1. Carrega o endereço base do array local em Rad
+                            fprintf(arquivoSaida, "    MOV Rad, FP\n");
+                            fprintf(arquivoSaida, "    ADDI Rad, Rad, #%d\n", simbolo->offset);
+                            // 2. Adiciona o deslocamento (índice, que está em reg_res) ao endereço base
+                            fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
+                            // 3. Carrega o valor do endereço final no registrador de destino (reg_op1)
+                            fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
                         }
                         else if (simbolo->id_type == param_k){
                             fprintf(arquivoSaida, "    ; Acessando param'%s'\n", tac->op2);
                             fprintf(arquivoSaida, "    MOV Rad, FP\n", reg_op1, simbolo->offset);
                             fprintf(arquivoSaida, "    SUBI Rad, Rad, #%d\n", atoi(escopo_atual.qtd_param) - simbolo->offset);
+                            fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                        }
+                        else if (simbolo->id_type == param_array_k){
+                            fprintf(arquivoSaida, "    ; Acessando param array: '%s'\n", tac->op2);
+                            // 1. Carrega o endereço do ponteiro para Rad
+                            fprintf(arquivoSaida, "    MOV Rad, FP\n");
+                            fprintf(arquivoSaida, "    SUBI Rad, Rad, #%d\n", atoi(escopo_atual.qtd_param) - simbolo->offset);
+                            // 2. Carrega o valor do ponteiro (o endereço base do array original) para Rad
+                            fprintf(arquivoSaida, "    LDR Rad, [Rad, #0]\n");
+                            // 3. Adiciona o deslocamento (índice, que está em reg_res) ao endereço base
+                            fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
+                            // 4. Carrega o valor do endereço final no registrador de destino (reg_op1)
                             fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
                         }
                     }
@@ -126,26 +147,58 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             Symbol* simbolo = find_symbol(tabela_simbolos, tac->op1, "GLOBAL");
             if (simbolo != NULL) { // É global
                 if (simbolo->id_type == var_k){
-                    fprintf(arquivoSaida, "    ; Armazenando em variável global '%s'\n", tac->resultado);
-                    fprintf(arquivoSaida, "    STR %s, [R0, #%d]\n", reg_op2, simbolo->offset); //
+                    fprintf(arquivoSaida, "    ; Armazenando em variável global '%s'\n", tac->op1);
+                    fprintf(arquivoSaida, "    STR %s, [R0, #%d]\n", reg_res, simbolo->offset);
                 }   
                 else if (simbolo->id_type == array_k){
                     fprintf(arquivoSaida, "    ;Armazenando em array global '%s'\n", tac->op1);
+                    // 1. Carrega o endereço base do array global em Rad
                     fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
-                    fprintf(arquivoSaida, "    STR %s, [Rad, #%s]\n", reg_op2, tac->resultado);
-                }    
-            } else {
+                    // 2. Adiciona o deslocamento (índice, que está em reg_op2) ao endereço base
+                    fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op2);
+                    // 3. Armazena o valor (que está em reg_res) no endereço final
+                    fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_res);
+                }
+            } else { // Não é global, procura no escopo local
                 simbolo = find_symbol(tabela_simbolos, tac->op1, escopo_atual.escopo);
                 if (simbolo != NULL) {
-                    if (simbolo->id_type == var_k){
+                    if (simbolo->id_type == var_k) {
                         fprintf(arquivoSaida, "    ; Armazenando em variavel local '%s'\n", tac->op1);
-                        fprintf(arquivoSaida, "    STR %s, [FP, #%d]\n", reg_op2, simbolo->offset);
-                    }   
+                        fprintf(arquivoSaida, "    STR %s, [FP, #%d]\n", reg_res, simbolo->offset);
+                    } 
                     else if (simbolo->id_type == array_k){
-                        fprintf(arquivoSaida, "    ; Armazenando array local '%s'\n", tac->op1);
+                        fprintf(arquivoSaida, "    ; Armazenando em array local '%s'\n", tac->op1);
+                        // 1. Carrega o endereço base do array local em Rad
                         fprintf(arquivoSaida, "    MOV Rad, FP\n");
                         fprintf(arquivoSaida, "    ADDI Rad, Rad, #%d\n", simbolo->offset);
-                        fprintf(arquivoSaida, "    STR %s, [Rad, #%s]\n", reg_op2, tac->resultado);
+                        
+                        // 2. Adiciona o deslocamento (índice, que está em reg_op2) ao endereço base
+                        fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op2);
+
+                        // 3. Armazena o valor (que está em reg_res) no endereço final
+                        fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_res);
+                    }
+                    else if (simbolo->id_type == param_k){
+                        fprintf(arquivoSaida, "    ; Armazenando param '%s'\n", tac->op1);
+                        fprintf(arquivoSaida, "    MOV Rad, FP\n", reg_op1, simbolo->offset);
+                        fprintf(arquivoSaida, "    SUBI Rad, Rad, #%d\n", atoi(escopo_atual.qtd_param) - simbolo->offset);
+                        fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_op2);
+                    }
+                    else if (simbolo->id_type == param_array_k){
+                        fprintf(arquivoSaida, "    ; Armazenando em param array '%s'\n", tac->op1);
+                        
+                        // 1. Carrega o endereço do ponteiro (parâmetro) para Rad.
+                        fprintf(arquivoSaida, "    MOV Rad, FP\n");
+                        fprintf(arquivoSaida, "    SUBI Rad, Rad, #%d\n", atoi(escopo_atual.qtd_param) - simbolo->offset);
+                        
+                        // 2. Carrega o valor do ponteiro (o endereço base do array original) para Rad.
+                        fprintf(arquivoSaida, "    LDR Rad, [Rad, #0]\n");
+
+                        // 3. Adiciona o deslocamento (índice, que está em reg_op2) ao endereço base.
+                        fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op2);
+
+                        // 4. Armazena o valor (que está em reg_res) no endereço final calculado.
+                        fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_res);
                     }
                 }
                 else {
@@ -178,6 +231,17 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             break;
         }
         case END:
+            if (strcmp(tac->op1, "main") != 0){
+                Symbol* simbolo = find_symbol(tabela_simbolos, tac->op1, "GLOBAL");
+                //Retorno apenas em funções void
+                if(strcmp(simbolo->type, "void") == 0){
+                    fprintf(arquivoSaida,"    LDR Rlink [FP #1]\n", get_reg(tac->op1), get_reg(tac->op2));
+                    fprintf(arquivoSaida,"    MOV SP, FP\n", get_reg(tac->op1), get_reg(tac->op2));
+                    fprintf(arquivoSaida,"    LDR FP [FP #0]\n", get_reg(tac->op1), get_reg(tac->op2));
+                    fprintf(arquivoSaida,"    B Rlink\n", get_reg(tac->op1), get_reg(tac->op2));
+                }
+            }
+            
             break;
         case IFF:{
             break;
