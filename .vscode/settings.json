@@ -1,0 +1,30 @@
+{
+    "files.associations": {
+        "array": "c",
+        "atomic": "c",
+        "bit": "c",
+        "cmath": "c",
+        "compare": "c",
+        "concepts": "c",
+        "string": "c",
+        "unordered_map": "c",
+        "exception": "c",
+        "algorithm": "c",
+        "memory": "c",
+        "memory_resource": "c",
+        "random": "c",
+        "string_view": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "functional": "c",
+        "iosfwd": "c",
+        "limits": "c",
+        "new": "c",
+        "numeric": "c",
+        "ostream": "c",
+        "streambuf": "c",
+        "system_error": "c",
+        "tuple": "c",
+        "typeinfo": "c"
+    }
+}

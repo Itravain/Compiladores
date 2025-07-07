@@ -87,13 +87,21 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                     fprintf(arquivoSaida, "    LDR %s, [R0, #%d]\n", reg_op1, simbolo->offset);
                 }
                 else if (simbolo->id_type == array_k) {
-                    fprintf(arquivoSaida, "    ; Acessando array global '%s'\n", tac->op2);
-                    // 1. Carrega o endereço base do array global em Rad
-                    fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
-                    // 2. Adiciona o deslocamento (índice, que está em reg_res) ao endereço base
-                    fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
-                    // 3. Carrega o valor do endereço final no registrador de destino (reg_op1)
-                    fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                    if(strcmp(reg_res, "") == 0) {
+                        fprintf(arquivoSaida, "    ; Acessando endereço de array global '%s'\n", tac->op2);
+                        //Acessando enderço base
+                        fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                        fprintf(arquivoSaida, "    MOV %s, Rad\n", reg_op1);
+                    }
+                    else {
+                        fprintf(arquivoSaida, "    ; Acessando array global '%s'\n", tac->op2);
+                        // 1. Carrega o endereço base do array global em Rad
+                        fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                        // 2. Adiciona o deslocamento (índice, que está em reg_res) ao endereço base
+                        fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
+                        // 3. Carrega o valor do endereço final no registrador de destino (reg_op1)
+                        fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                    }
                 }
             } else { // Não é global, procura no escopo local
                 if ( (atoi(tac->op2) != 0) || (strcmp(tac->op2, "0") == 0) ) {
@@ -107,14 +115,26 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                             fprintf(arquivoSaida, "    LDR %s, [FP, #%d]\n", reg_op1, simbolo->offset);
                         }   
                         else if (simbolo->id_type == array_k){
-                            fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op2);
-                            // 1. Carrega o endereço base do array local em Rad
-                            fprintf(arquivoSaida, "    MOV Rad, FP\n");
-                            fprintf(arquivoSaida, "    ADDI Rad, Rad, #%d\n", simbolo->offset);
-                            // 2. Adiciona o deslocamento (índice, que está em reg_res) ao endereço base
-                            fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
-                            // 3. Carrega o valor do endereço final no registrador de destino (reg_op1)
-                            fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                            //Acessando endereço do array
+                            if(strcmp(reg_res, "") == 0) {
+                                fprintf(arquivoSaida, "    ; Acessando endereço de array local '%s'\n", tac->op2);
+                                fprintf(arquivoSaida, "    MOV Rad, FP\n");
+                                fprintf(arquivoSaida, "    ADDI Rad, Rad, #%d\n", simbolo->offset);
+                                fprintf(arquivoSaida, "    MOV %s, Rad\n", reg_op1);
+
+                            }
+                            else{
+                                fprintf(arquivoSaida, "    ; Acessando array local '%s'\n", tac->op2);
+                                // 1. Carrega o endereço base do array local em Rad
+                                fprintf(arquivoSaida, "    MOV Rad, FP\n");
+                                fprintf(arquivoSaida, "    ADDI Rad, Rad, #%d\n", simbolo->offset);
+                                // 2. Adiciona o deslocamento (índice, que está em reg_res) ao endereço base
+                                fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
+                                // 3. Carrega o valor do endereço final no registrador de destino (reg_op1)
+                                fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                            }
+
+
                         }
                         else if (simbolo->id_type == param_k){
                             fprintf(arquivoSaida, "    ; Acessando param'%s'\n", tac->op2);
@@ -123,16 +143,24 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                             fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
                         }
                         else if (simbolo->id_type == param_array_k){
-                            fprintf(arquivoSaida, "    ; Acessando param array: '%s'\n", tac->op2);
-                            // 1. Carrega o endereço do ponteiro para Rad
-                            fprintf(arquivoSaida, "    MOV Rad, FP\n");
-                            fprintf(arquivoSaida, "    SUBI Rad, Rad, #%d\n", atoi(escopo_atual.qtd_param) - simbolo->offset);
-                            // 2. Carrega o valor do ponteiro (o endereço base do array original) para Rad
-                            fprintf(arquivoSaida, "    LDR Rad, [Rad, #0]\n");
-                            // 3. Adiciona o deslocamento (índice, que está em reg_res) ao endereço base
-                            fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
-                            // 4. Carrega o valor do endereço final no registrador de destino (reg_op1)
-                            fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                            if(strcmp(reg_res, "") == 0) {
+                                fprintf(arquivoSaida, "    ; Acessando endereço de param array: '%s'\n", tac->op2);
+                                fprintf(arquivoSaida, "    MOV Rad, FP\n");
+                                fprintf(arquivoSaida, "    SUBI Rad, Rad, #%d\n", atoi(escopo_atual.qtd_param) - simbolo->offset);
+                                fprintf(arquivoSaida, "    MOV %s, Rad\n", reg_op1);
+                            }
+                            else {
+                                fprintf(arquivoSaida, "    ; Acessando param array: '%s'\n", tac->op2);
+                                // 1. Carrega o endereço do ponteiro para Rad
+                                fprintf(arquivoSaida, "    MOV Rad, FP\n");
+                                fprintf(arquivoSaida, "    SUBI Rad, Rad, #%d\n", atoi(escopo_atual.qtd_param) - simbolo->offset);
+                                // 2. Carrega o valor do ponteiro (o endereço base do array original) para Rad
+                                fprintf(arquivoSaida, "    LDR Rad, [Rad, #0]\n");
+                                // 3. Adiciona o deslocamento (índice, que está em reg_res) ao endereço base
+                                fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
+                                // 4. Carrega o valor do endereço final no registrador de destino (reg_op1)
+                                fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
+                            }
                         }
                     }
                     else {
