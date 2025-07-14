@@ -273,8 +273,19 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, HashTable *symbol_tabl
         case expression_k: {
             switch (node_tree->kind_union.expr) {
                 case op_k: {
-                    char *res1 = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
-                    char *res2 = percorrer_arvore(node_tree->filho[1], tac_list_ptr, symbol_table, 0, 0);
+                    char *res1, *res2;
+
+                    // Verifica se o segundo operando é uma chamada de função.
+                    if (node_tree->filho[1]->kind_node == expression_k && node_tree->filho[1]->kind_union.expr == ativ_k) {
+                        // Se for, processa a chamada de função PRIMEIRO.
+                        res2 = percorrer_arvore(node_tree->filho[1], tac_list_ptr, symbol_table, 0, 0);
+                        // DEPOIS, processa o primeiro operando para garantir que ele seja recarregado da memória.
+                        res1 = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
+                    } else {
+                        // Se não, mantém a ordem original.
+                        res1 = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
+                        res2 = percorrer_arvore(node_tree->filho[1], tac_list_ptr, symbol_table, 0, 0);
+                    }
                     
                     if (res1 && res2) {
                         result_str = gerar_temporario();
@@ -293,14 +304,12 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, HashTable *symbol_tabl
                         else if (strcmp(node_tree->lexmema, "==") == 0) op = EQUAL;
                         else if (strcmp(node_tree->lexmema, ">") == 0) op = GREATER;
                         else if (strcmp(node_tree->lexmema, "<") == 0) op = LESS;
-                        else {
-                            fprintf(stderr, "Erro: Operador não reconhecido '%s'\n", node_tree->lexmema);
-                            op = -1;
-                        }
+                        else { op = -1; /* Operação desconhecida */ }
 
                         if (op != -1) {
                             *tac_list_ptr = criarNoTac(*tac_list_ptr, op, result_str, res1, res2);
                         }
+
                         if (expression_parametro){
                             *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, result_str, "", "");
                         }

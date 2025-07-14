@@ -19,8 +19,9 @@ fi
 # ./compiler < test_codes/_teste_4.c > outputs/output.txt 2>&1
 # ./compiler < test_codes/_teste_5.c > outputs/output.txt 2>&1
 # ./compiler < test_codes/gcd.c > outputs/output.txt 2>&1
-# ./compiler < test_codes/sort.c > outputs/output.txt 2>&1
-./compiler < test_codes/Sort_teste.c > outputs/output.txt 2>&1
+./compiler < test_codes/sort.c > outputs/output.txt 2>&1
+# ./compiler < test_codes/Sort_teste.c > outputs/output.txt 2>&1
 # ./compiler < test_codes/very_basic.c > outputs/output.txt 2>&1
+# ./compiler < test_codes/fatorial.c > outputs/output.txt 2>&1
 
 python Assembler/assembler.py outputs/assembly.asm > outputs/bin.txt
