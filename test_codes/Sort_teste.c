@@ -1,4 +1,4 @@
-int vet[5];
+int vet[3];
 
 int minloc( int a[], int low, int high )
 {	
@@ -33,16 +33,11 @@ void sort( int a[], int low, int high)
 
 void main(void)
 {
-	int i;
-	i = 0;
-	while (i < 5){
-		vet[i] = input();
-		i = i + 1;
-	}
-	sort(vet,0,5);
-	i = 0;
-	while (i < 5){
-		output(vet[i]);
-		i = i + 1;
-	}
+	vet[0] = 15;
+	vet[1] = 1;
+	vet[2] = 5;
+	sort(vet,0,3);
+	output(vet[0]);
+	output(vet[1]);
+	output(vet[2]);
 }

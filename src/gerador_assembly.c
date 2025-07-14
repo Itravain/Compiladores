@@ -147,7 +147,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                                 fprintf(arquivoSaida, "    ; Acessando endereço de param array: '%s'\n", tac->op2);
                                 fprintf(arquivoSaida, "    MOV Rad, FP\n");
                                 fprintf(arquivoSaida, "    SUBI Rad, Rad, #%d\n", atoi(escopo_atual.qtd_param) - simbolo->offset);
-                                fprintf(arquivoSaida, "    MOV %s, Rad\n", reg_op1);
+                                fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", reg_op1);
                             }
                             else {
                                 fprintf(arquivoSaida, "    ; Acessando param array: '%s'\n", tac->op2);
