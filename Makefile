@@ -11,6 +11,7 @@ LDFLAGS := -lfl
 TARGET := compiler
 SRC_DIR := src
 OUTPUT_DIR := outputs
+BIN_DIR := bin
 ASSEMBLER := Assembler/assembler.py
 
 SRCS := $(SRC_DIR)/main.c \
@@ -46,10 +47,7 @@ lex.yy.c: $(SRC_DIR)/lexical_analyser.l analise_sintatica.tab.h
 > $(CC) $(CFLAGS) -c -o $@ $<
 
 # DEPENDÊNCIAS GERADAS (garantem ordem correta)
-# main.o precisa do header do Bison
 $(SRC_DIR)/main.o: analise_sintatica.tab.h globals.h
-
-# demais .o recompilam quando globals.h muda
 $(SRC_DIR)/arvore.o \
 $(SRC_DIR)/tabSimbolos.o \
 $(SRC_DIR)/analise_semantica.o \
@@ -59,11 +57,11 @@ $(SRC_DIR)/pilha.o: globals.h
 
 # "Simula" um gcc: aceita INPUT=<arquivo.c-> e OUTPUT=<binário>
 compile: all
-> [ -n "$(INPUT)" ] || { echo "ERRO: use make compile INPUT=test_codes/fatorial.c [OUTPUT=outputs/fatorial.bin]"; exit 1; }
-> mkdir -p $(OUTPUT_DIR)
+> [ -n "$(INPUT)" ] || { echo "ERRO: use make compile INPUT=test_codes/fatorial.c [OUTPUT=bin/fatorial.bin]"; exit 1; }
+> mkdir -p $(OUTPUT_DIR) $(BIN_DIR)
 > BASENAME=$$(basename -s .c $$(basename -s .c- "$(INPUT)"))
 > OUTFILE="$(OUTPUT)"
-> [ -n "$$OUTFILE" ] || OUTFILE="$(OUTPUT_DIR)/$$BASENAME.bin"
+> [ -n "$$OUTFILE" ] || OUTFILE="$(BIN_DIR)/$$BASENAME.bin"
 > echo "Compilando '$(INPUT)'..."
 > ./$(TARGET) < "$(INPUT)"
 > echo "Montando para '$$OUTFILE'..."
@@ -74,4 +72,5 @@ clean:
 > echo "Limpando..."
 > rm -f $(TARGET) $(OBJS) lex.yy.c analise_sintatica.tab.c analise_sintatica.tab.h
 > rm -f $(OUTPUT_DIR)/*
+> rm -f $(BIN_DIR)/*
 > echo "Feito."

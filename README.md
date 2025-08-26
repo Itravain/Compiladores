@@ -1,60 +1,203 @@
-# Compiladores
-Repositório criado para armazenar o projeto final da disciplina de compiladores ministrada pelo discente Galão na UNIFESP. O projeto consiste na implementação do analisador léxico e semântico da linguagem de programação c-. Os autores deste projeto são:
-- Eduardo Bouhid
-- Ícaro Travain
+# Compiladores · C- Compiler
 
-## Scanner (Analisador léxico)
-A primeira etapa deste projeto consiste na implementação de um analisador léxico com auxílio do software flex para gerar o progema em c a partir das expressões regulares da linguagem. 
-| Tokens              | Exp. Regular                                                                                                                   |
-|---------------------|--------------------------------------------------------------------------------------------------------------------------------|
-| Identificador       | [A-Za-z]+([A-Za-z])*                                                                                                           |
-| Numero              | [1-9]+[0-9]*                                                                                                                   |
-| Palavras Reservadas | (if \| else \| while \| int \| void \| return)                                                                                 |
-| Comentarios         | (/\*(Identificador \| Simbolo \| Operador \| Numero)*\*/ \| // (Identificador \| Simbolo \| Operador \| Numero) *(\\n \| EOF)) |
-| Macros              | (#include \| #define)                                                                                                          |
-| Símbolos            | ({ \| } \| ( \| ) \| [ \| ] ; \| . \| ,)                                                                                       |
-| Operadores          | (+ \| - \| / \| \* \| % \| && \| \|\| ! \| != \| == \| = | >= | <= | > | <)                                                    |
+[![Made with Flex & Bison](https://img.shields.io/badge/Made%20with-Flex%20%26%20Bison-1f6feb)](https://www.gnu.org/software/bison/)
+[![Language](https://img.shields.io/badge/lang-C-blue.svg)](src/)
+[![Build](https://img.shields.io/badge/build-Makefile-success)](Makefile)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](#license)
 
-## Tabela de símbolos
-A tabela de símbolos é implementada utilizando uma tabela hash para armazenar informações sobre variáveis e funções declaradas no código-fonte. Cada entrada na tabela de símbolos contém o nome, tipo, escopo e outras informações relevantes sobre a variável ou função.
+Compilador acadêmico para a linguagem C- com pipeline completo: Scanner (Flex), Parser (Bison), AST, Análise Semântica, TAC e Geração de Assembly + binário via montador Python.
 
-## Analisador sintático
-O analisador sintático é implementado utilizando o Bison para gerar o parser a partir da gramática da linguagem c-. Ele constrói a árvore de sintaxe abstrata (AST) que representa a estrutura do código-fonte.
+<p align="center">
+  <i>Tokens → Parser → AST → Semântica → TAC → Assembly → Binário</i>
+</p>
 
-## Árvore sintática
-A árvore sintática (AST) é uma representação hierárquica do código-fonte, onde cada nó representa uma construção sintática (como uma declaração de variável ou uma expressão). A AST é utilizada nas etapas posteriores de análise semântica e geração de código.
+---
 
-## Analisador semântico
-O analisador semântico verifica regras semânticas do código-fonte, como tipos de dados, escopos e declarações múltiplas. Ele utiliza a tabela de símbolos para garantir que todas as variáveis e funções sejam declaradas corretamente e que não haja conflitos de tipos.
+## Sumário
+- [Visão geral](#visão-geral)
+- [Pipeline de compilação](#pipeline-de-compilação)
+- [Recursos](#recursos)
+- [Pré-requisitos](#pré-requisitos)
+- [Uso rápido](#uso-rápido)
+- [Comandos do Makefile](#comandos-do-makefile)
+- [Exemplo de compilação](#exemplo-de-compilação)
+- [Estrutura do repositório](#estrutura-do-repositório)
+- [Detalhes de implementação](#detalhes-de-implementação)
+- [Dicas e solução de problemas](#dicas-e-solução-de-problemas)
+- [Contribuição](#contribuição)
+- [Licença](#license)
+- [Autores](#autores)
 
-## Como compilar e executar
-Para compilar e executar o compilador, utilize o script `script.sh` fornecido no repositório. Este script gera o analisador léxico, o parser, compila o código-fonte e executa o compilador com um arquivo de teste.
+---
 
-```bash
-# Generate the lexical analyzer
-flex src/lexical_analyser.l
+## Visão geral
+Este projeto implementa um compilador para C-:
+- Análise léxica com Flex.
+- Análise sintática com Bison.
+- Geração de AST e Tabela de Símbolos.
+- Análise semântica (tipos, escopos, declarações).
+- Geração de Código Intermediário (TAC).
+- Geração de Assembly e montagem para binário.
 
-# Generate the parser
-bison -d src/analise_sintatica.y
+---
 
-# Compile the generated C code along with any additional source files
-gcc -g -o compiler lex.yy.c analise_sintatica.tab.c src/arvore.c src/tabSimbolos.c src/analise_semantica.c globals.h src/main.c -lfl
+## Pipeline de compilação
 
-# Create a directory to store the output files
-if [ ! -d "outputs" ]; then
-  mkdir outputs
-fi
-
-# Run the compiled program
-./compiler < test_codes/sort_ok.c > outputs/output.txt 2>&1
+```mermaid
+flowchart LR
+    A[Fonte C-] --> B[Scanner (Flex)]
+    B --> C[Parser (Bison)]
+    C --> D[AST]
+    D --> E[Análise Semântica<br/>Tabela de Símbolos]
+    E --> F[TAC]
+    F --> G[Assembly]
+    G --> H[Montador Python]
+    H --> I[Binário (bin/)]
 ```
 
+---
+
+## Recursos
+- Suporte a variáveis globais/locais e parâmetros (incluindo arrays).
+- Controle de fluxo: if/else, while, return.
+- Expressões aritméticas e relacionais.
+- TAC (Three-Address Code) com suporte a labels e saltos.
+- Geração de assembly com acesso a pilha/FP/dados globais.
+- Makefile com alvos práticos (compile, clean, tests, distclean).
+
+---
+
+## Pré-requisitos
+- Linux, GNU Make
+- gcc, flex, bison, python3
+- Montador Python: [Assembler/assembler.py](Assembler/assembler.py)
+
+Verificar ferramentas:
+```bash
+make check-tools
+```
+
+---
+
+## Uso rápido
+Compile o compilador:
+```bash
+make
+```
+
+Compile um programa C- e gere o binário em bin/:
+```bash
+make compile INPUT=test_codes/fatorial.c
+# Saídas:
+# - outputs/arvore.txt, tabsimb.txt, codInterm.txt
+# - outputs/assembly.asm
+# - bin/fatorial.bin
+```
+
+Escolher o nome do binário:
+```bash
+make compile INPUT=test_codes/_teste_5.c OUTPUT=bin/teste5.bin
+```
+
+Limpar:
+```bash
+make clean
+# ou
+make distclean  # limpa também gerados por Flex/Bison e .d
+```
+
+---
+
+## Comandos do Makefile
+| Alvo | Descrição |
+|------|-----------|
+| `make` / `make all` | Constrói o compilador (`compiler`). |
+| `make compile INPUT=arquivo.c- [OUTPUT=bin/saida.bin]` | Compila um fonte C-, gera assembly e monta binário. |
+| `make clean` | Remove binário do compilador, objetos e saídas. |
+
+---
+
+## Exemplo de compilação
+Fonte de exemplo: [test_codes/fatorial.c](test_codes/fatorial.c)
+```c
+int fatorial(int numero){
+    if (numero <= 1) return 1;
+    return numero * fatorial(numero-1);
+}
+int main(){
+    int a; 
+    a = 5;
+    a = fatorial(a);
+    output(a);
+}
+```
+
+Comando:
+```bash
+make compile INPUT=test_codes/fatorial.c
+```
+
+Saídas:
+- TAC: [outputs/codInterm.txt](outputs/codInterm.txt)
+- Assembly: [outputs/assembly.asm](outputs/assembly.asm)
+- Binário: bin/fatorial.bin
+
+Trecho do assembly (exemplo):
+```asm
+; início de main
+PUSH FP
+MOV FP, SP
+ADDI SP, SP, #N
+...
+```
+
+---
+
 ## Estrutura do repositório
-- `src/`: Contém os arquivos-fonte do compilador.
-- `outputs/`: Diretório onde os arquivos de saída são gerados.
-- `test_codes/`: Contém arquivos de teste para o compilador.
-- `script.sh`: Script para compilar e executar o compilador.
-- `README.md`: Este arquivo de documentação.
+```
+.
+├─ src/
+│  ├─ main.c
+│  ├─ arvore.c
+│  ├─ tabSimbolos.c
+│  ├─ analise_semantica.c
+│  ├─ codigo_intermediario.c
+│  ├─ gerador_assembly.c
+│  └─ pilha.c
+├─ Assembler/
+│  └─ assembler.py
+├─ test_codes/
+├─ outputs/
+├─ bin/
+├─ globals.h
+├─ analise_sintatica.y (Bison)
+├─ lexical_analyser.l (Flex)
+├─ Makefile
+└─ README.md
+```
+
+---
+
+## Detalhes de implementação
+- AST: construída pelo parser ([src/main.c](src/main.c)) e impressa em [outputs/arvore.txt](outputs/arvore.txt).
+- Tabela de símbolos: hash com escopos e offsets ([src/tabSimbolos.c](src/tabSimbolos.c)).
+- TAC: gerado por [src/codigo_intermediario.c](src/codigo_intermediario.c) e salvo em [outputs/codInterm.txt](outputs/codInterm.txt).
+- Assembly: gerado por [src/gerador_assembly.c](src/gerador_assembly.c).
+- Considerações de registradores/stack para chamadas e recursão.
+
+<details>
+<summary>Tokens do scanner (resumo)</summary>
+
+| Categoria | Exemplos |
+|---|---|
+| Palavras-chave | `if`, `else`, `while`, `int`, `void`, `return` |
+| Operadores | `+ - * / % && || ! != == = >= <= > <` |
+| Símbolos | `{ } ( ) [ ] ; , .` |
+</details>
+
+---
+
+
 
 ## Autores
 - Eduardo Bouhid

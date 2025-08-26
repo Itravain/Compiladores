@@ -9,3 +9,9 @@ testes
 outputs/
 To-do.txt
 test_codes/
+bin/
+analise_sintatica.tab.o
+lex.yy.o
+analise_sintatica.output
+src/*.o
+src/**/*.o
