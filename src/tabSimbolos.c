@@ -53,14 +53,11 @@ int atualizar_offset(char* scope, int size, int param) {
         fprintf(stderr, "Erro: Escopo %s não encontrado.\n", scope);
         return -999; // Error
     }
-    
-    
     //Se for um parametro
     if(param){
         frames[index].proximo_offset_disponivel_param++;
         return frames[index].proximo_offset_disponivel_param - 1;
     }
-
     //Variável
     frames[index].proximo_offset_disponivel += size;
     if(strcmp(scope ,"main") == 0 || strcmp(scope,"GLOBAL") == 0) {
@@ -98,7 +95,13 @@ void iterate_tree(No* root, HashTable* symbol_table) {
                 case array_k:
                     // Declaração de array: int a[10];
                     if (symbol_node->filho[0] != NULL) {
-                        int size = atoi(symbol_node->filho[0]->lexmema);
+                        int size;
+                        if(strcmp(symbol_node->lexmema, "VIDEO_MEMORY") == 0){
+                            size = 0;
+                        }
+                        else{
+                            size = atoi(symbol_node->filho[0]->lexmema);
+                        }
                         new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, size, atualizar_offset(scope, size, 0));
                     }
                     break;
