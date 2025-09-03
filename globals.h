@@ -5,6 +5,9 @@
 #define NUMMAXFILHOS 3
 #define MAXLEXEME 25
 
+# define MAX_IMMEDIATE 1023
+#define VIDEO_BASE 4096
+
 //Estrutura de pilha
 // O nó que armazena o dado
 typedef struct noPilha
@@ -135,7 +138,7 @@ int count_symbol(char* name, char* scope, HashTable* symbol_table);
 void free_table(HashTable* table);
 
 //Código intermediário
-enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN};
+enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, LEQ, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN};
 
 typedef struct tacNo{
     enum operacoes operacao;

@@ -2,7 +2,7 @@ import re
 import sys
 
 debugar = True
-debugar = False
+# debugar = False
 
 class Assembler:
     import re
@@ -10,7 +10,7 @@ class Assembler:
 class Assembler:
     def __init__(self):
         self.special_registers = {
-            "Rret": 24, "Rad": 25, "SP": 26, "FP": 27, "Rin": 28, 
+            "RBase": 23,"Rret": 24, "Rad": 25, "SP": 26, "FP": 27, "Rin": 28, 
             "Rout": 29, "CPSR": 30, "Rlink": 31
         }
         self.symbol_table = {}
@@ -171,7 +171,7 @@ class Assembler:
                         self._get_operand_binary(target_address, 24)  # imm24
                     ]
 
-            elif mnemonic == "BLE" or mnemonic == "BGE" or mnemonic == "BNE":
+            elif mnemonic == "BLE" or mnemonic == "BGE" or mnemonic == "BNE" or mnemonic == "BGT":
                 target_label = operands[0]
                 # Verifica condições do CPSR
                 if mnemonic == "BNE":
@@ -180,6 +180,8 @@ class Assembler:
                     cond_code = '1010'
                 elif mnemonic == "BLE":
                     cond_code = '1101'
+                elif mnemonic == "BGT":
+                    cond_code = '1100'  # Código para "Greater Than"
                 else:
                     raise ValueError(f"Condição desconhecida: {mnemonic}")
 

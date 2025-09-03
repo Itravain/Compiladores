@@ -4,7 +4,7 @@
 #include "../globals.h"
 #define NUMMAXFILHOS 3
 #define MAXLEXEME 25
-#define MAX_TEMP 24
+#define MAX_TEMP 23
 
 const char* get_decl_kind_as_string(DeclarationKind kind) {
     switch (kind) {
@@ -17,7 +17,7 @@ const char* get_decl_kind_as_string(DeclarationKind kind) {
 }
 
 const char *operacoes_nomes[] = {
-    "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "IFF", "RET", "GOTO", "LAB",
+    "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "LEQ", "IFF", "RET", "GOTO", "LAB",
     "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN"
 };
 const int NUM_OPERACOES = sizeof(operacoes_nomes) / sizeof(operacoes_nomes[0]);
@@ -304,6 +304,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, HashTable *symbol_tabl
                         else if (strcmp(node_tree->lexmema, "==") == 0) op = EQUAL;
                         else if (strcmp(node_tree->lexmema, ">") == 0) op = GREATER;
                         else if (strcmp(node_tree->lexmema, "<") == 0) op = LESS;
+                        else if (strcmp(node_tree->lexmema, "<=") == 0) op = LEQ;
                         else { op = -1; /* Operação desconhecida */ }
 
                         if (op != -1) {
@@ -401,8 +402,9 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, HashTable *symbol_tabl
                     int num_params = 0;
                     No* param_node = node_tree->filho[0];
                     
-                    char *tmp = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 1, 0);
-            
+                    char* res_child = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 1, 0);
+                    free(res_child);
+
                     while(param_node != NULL) {
                         num_params++;
                         param_node = param_node->irmao;
@@ -410,16 +412,15 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, HashTable *symbol_tabl
                     
                     char params_str[10];
                     sprintf(params_str, "%d", num_params);
-                    
 
-                    tmp = gerar_temporario();
-                    *tac_list_ptr = criarNoTac(*tac_list_ptr, CALL, tmp, node_tree->lexmema, params_str);
+                    result_str = gerar_temporario();
+                    if (!result_str) return NULL;
                     
-                    if(node_tree->irmao == NULL){
-                        return tmp;
+                    *tac_list_ptr = criarNoTac(*tac_list_ptr, CALL, result_str, node_tree->lexmema, params_str);
+                    
+                    if (expression_parametro) {
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, PARAM, result_str, "", "");
                     }
-                    free(tmp);
-                    result_str = NULL;
                     break;
                 }
                 case arr_k: {

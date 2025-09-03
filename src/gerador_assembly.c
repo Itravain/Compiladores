@@ -6,6 +6,28 @@
 
 Escopo escopo_atual;
 
+void emit_movi(FILE *arquivoSaida, const char* reg_destino, int valor) {
+    if (valor <= MAX_IMMEDIATE) {
+        // O valor cabe em uma única instrução, gera o MOVI diretamente.
+        fprintf(arquivoSaida, "      MOVI %s, #%d\n", reg_destino, valor);
+    } else {
+        // O valor é grande, precisa ser expandido usando a lógica de multiplicação.
+        int quociente = valor / 1024;
+        int resto = valor % 1024;
+
+        fprintf(arquivoSaida, "      ; Carregando valor grande %d em %s (expansao via MUL)\n", valor, reg_destino);
+        
+        // 1. Carrega o quociente (multiplicador) em um registrador temporário (Rad).
+        fprintf(arquivoSaida, "      MOVI Rad, #%d\n", quociente);
+       
+        // 2. Multiplica o quociente pelo valor em RBase (que foi inicializado com 1024).
+        fprintf(arquivoSaida, "      MUL Rad, Rad, RBase\n");
+        
+        // 3. Adiciona o resto para compor o valor final no registrador de destino.
+        fprintf(arquivoSaida, "      ADDI %s, Rad, #%d\n", reg_destino, resto);
+    }
+}
+
 //Função para mapear registradores do código intermediário para registradores físicos
 char* get_reg(const char *temp_name) {
     char* reg_name = (char*) malloc(4 * sizeof(char));
@@ -39,7 +61,7 @@ int is_numeric(const char *str) {
 
 void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabela_simbolos) {
     const char *op_nomes[] = {
-        "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "IFF", "RET", "GOTO", "LAB",
+        "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "LEQ", "IFF", "RET", "GOTO", "LAB",
         "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN"
     };
     
@@ -97,13 +119,13 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                         if(strcmp(reg_res, "") == 0) {
                             fprintf(arquivoSaida, "    ; Acessando endereço de array global '%s'\n", tac->op2);
                             //Acessando enderço base
-                            fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                            emit_movi(arquivoSaida, "Rad", simbolo->offset);
                             fprintf(arquivoSaida, "    MOV %s, Rad\n", reg_op1);
                         }
                         else {
                             fprintf(arquivoSaida, "    ; Acessando array global '%s'\n", tac->op2);
                             // 1. Carrega o endereço base do array global em Rad
-                            fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                            emit_movi(arquivoSaida, "Rad", simbolo->offset);
                             // 2. Adiciona o deslocamento (índice, que está em reg_res) ao endereço base
                             fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
                             // 3. Carrega o valor do endereço final no registrador de destino (reg_op1)
@@ -112,7 +134,8 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                     }
                 } else { // Não é global, procura no escopo local
                     if ( (atoi(tac->op2) != 0) || (strcmp(tac->op2, "0") == 0) ) {
-                        fprintf(arquivoSaida, "    MOVI %s, #%s\n", reg_op1, tac->op2);
+                        int valor_imediato = atoi(tac->op2);
+                        emit_movi(arquivoSaida, reg_op1, valor_imediato);
                     }
                     else {
                         simbolo = find_symbol(tabela_simbolos, tac->op2, escopo_atual.escopo);
@@ -182,9 +205,8 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         case STORE: {
             if (strcmp(tac->op1, "VIDEO_MEMORY") == 0) {
                 fprintf(arquivoSaida, "    ; Armazenando em array de video 'VIDEO_MEMORY'\n");
-                // 1. Carrega o endereço base da VRAM (1024) em Rad
-                fprintf(arquivoSaida, "    MOVI Rad, #1023\n");
-                fprintf(arquivoSaida, "    ADDI Rad, Rad, #1\n");
+                // 1. Carrega o endereço base da VRAM
+                emit_movi(arquivoSaida, "Rad", VIDEO_BASE);
                 // 2. Adiciona o deslocamento (índice, que está em reg_op2) ao endereço base
                 fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op2);
                 // 3. Armazena o valor (que está em reg_res) no endereço final
@@ -201,7 +223,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                     else if (simbolo->id_type == array_k){
                         fprintf(arquivoSaida, "    ;Armazenando em array global '%s'\n", tac->op1);
                         // 1. Carrega o endereço base do array global em Rad
-                        fprintf(arquivoSaida, "    MOVI Rad, #%d\n", simbolo->offset);
+                        emit_movi(arquivoSaida, "Rad", simbolo->offset);
                         // 2. Adiciona o deslocamento (índice, que está em reg_op2) ao endereço base
                         fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op2);
                         // 3. Armazena o valor (que está em reg_res) no endereço final
@@ -227,10 +249,10 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                             fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_res);
                         }
                         else if (simbolo->id_type == param_k){
-                            fprintf(arquivoSaida, "    ; Armazenando param '%s'\n", tac->op1);
-                            fprintf(arquivoSaida, "    MOV Rad, FP\n", reg_op1, simbolo->offset);
+                            fprintf(arquivoSaida, "    ; Armazenando em param '%s'\n", tac->op1);
+                            fprintf(arquivoSaida, "    MOV Rad, FP\n");
                             fprintf(arquivoSaida, "    SUBI Rad, Rad, #%d\n", atoi(escopo_atual.qtd_param) - simbolo->offset);
-                            fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_op2);
+                            fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_res); // Usa reg_res, que contém o valor
                         }
                         else if (simbolo->id_type == param_array_k){
                             fprintf(arquivoSaida, "    ; Armazenando em param array '%s'\n", tac->op1);
@@ -348,7 +370,10 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             break;
         }
         case RET: {
-            fprintf(arquivoSaida,"    MOV Rret, %s\n", reg_op1);
+            if (tac->op1[0] != '\0') {
+                fprintf(arquivoSaida,"    MOV Rret, %s\n", reg_op1);
+            }
+            // fprintf(arquivoSaida,"    SUBI SP, SP, #1\n");
             fprintf(arquivoSaida,"    LDR Rlink [FP #1]\n", get_reg(tac->op1), get_reg(tac->op2));
             fprintf(arquivoSaida,"    MOV SP, FP\n", get_reg(tac->op1), get_reg(tac->op2));
             fprintf(arquivoSaida,"    LDR FP [FP #0]\n", get_reg(tac->op1), get_reg(tac->op2));
@@ -363,6 +388,11 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         case EQUAL:{
             fprintf(arquivoSaida, "    CMP %s, %s\n", reg_op2, reg_res);
             fprintf(arquivoSaida, "    BNE %s\n", tac->proximo->op2);
+            break;
+        }
+        case LEQ:{
+            fprintf(arquivoSaida, "    CMP %s, %s\n",reg_op2, reg_res);
+            fprintf(arquivoSaida, "    BGT %s\n", tac->proximo->op2); // Salta para fora do laço se op1 > op2
             break;
         }
         case LESS:{
@@ -420,8 +450,9 @@ void gerar_codigo_final(FILE *arquivoSaida, Tac *listaTac, HashTable *tabela_sim
     }
     fprintf(arquivoSaida, "\n.text\n");
     fprintf(arquivoSaida, "    NOP\n");
-    fprintf(arquivoSaida, "    MOVI SP, #0\n");
-    fprintf(arquivoSaida, "    MOVI FP, #0\n");
+    emit_movi(arquivoSaida, "SP", 0);
+    emit_movi(arquivoSaida, "FP", 0);
+    emit_movi(arquivoSaida, "RBase", 1024);
     
     // Itera por toda a lista de instruções TAC
     TacNo *percorre = listaTac->inicio;
