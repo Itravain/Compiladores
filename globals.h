@@ -7,6 +7,7 @@
 
 # define MAX_IMMEDIATE 1023
 #define VIDEO_BASE 4096
+#define HD_BASE 12288
 
 //Estrutura de pilha
 // O nó que armazena o dado
@@ -37,7 +38,7 @@ Pilha* criar_pilha();
  */
 void push(Pilha *p, const char *palavra);
 
-/**
+/*
  * @brief Remove o elemento do topo da pilha.
  * @param p Ponteiro para a pilha.
  */
