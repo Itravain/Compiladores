@@ -18,7 +18,8 @@ const char* get_decl_kind_as_string(DeclarationKind kind) {
 
 const char *operacoes_nomes[] = {
     "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "LEQ", "IFF", "RET", "GOTO", "LAB",
-    "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN"
+    "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN",
+    "BRANCH", "SINT", "SBLR"
 };
 const int NUM_OPERACOES = sizeof(operacoes_nomes) / sizeof(operacoes_nomes[0]);
 
@@ -399,6 +400,44 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, HashTable *symbol_tabl
                     break;
                 }
                 case ativ_k:{
+                    if (strcmp(node_tree->lexmema, "branch") == 0) {
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, BRANCH, "", "", "");
+                        result_str = NULL; // run_program does not return a value
+                        break;
+                    }
+                    if (strcmp(node_tree->lexmema, "set_interrupt") == 0) {
+                        // Special handling for set_interrupt(type, addr)
+                        char *type_reg = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
+                        char *addr_reg = percorrer_arvore(node_tree->filho[0]->irmao, tac_list_ptr, symbol_table, 0, 0);
+                        if (type_reg && addr_reg) {
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, SINT, type_reg, addr_reg, "");
+                            free(type_reg);
+                            free(addr_reg);
+                        } else {
+                            fprintf(stderr, "Erro [set_interrupt]: Argumentos inválidos na linha %d.\n", node_tree->linha);
+                            free(type_reg);
+                            free(addr_reg);
+                        }
+                        result_str = NULL; // Built-in function does not return a value
+                        break;
+                    }
+                    if (strcmp(node_tree->lexmema, "set_b_l_reg") == 0) {
+                        // Special handling for set_b_l_reg(base, limit)
+                        char *base_reg = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
+                        char *limit_reg = percorrer_arvore(node_tree->filho[0]->irmao, tac_list_ptr, symbol_table, 0, 0);
+                        if (base_reg && limit_reg) {
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, SBLR, base_reg, limit_reg, "");
+                            free(base_reg);
+                            free(limit_reg);
+                        } else {
+                            fprintf(stderr, "Erro [set_b_l_reg]: Argumentos inválidos na linha %d.\n", node_tree->linha);
+                            free(base_reg);
+                            free(limit_reg);
+                        }
+                        result_str = NULL; // Built-in function does not return a value
+                        break;
+                    }
+
                     int num_params = 0;
                     No* param_node = node_tree->filho[0];
                     

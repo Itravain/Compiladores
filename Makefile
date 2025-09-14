@@ -68,6 +68,18 @@ compile: all
 > python3 "$(ASSEMBLER)" "$(OUTPUT_DIR)/assembly.asm" > "$$OUTFILE"
 > echo "OK: $$OUTFILE"
 
+# Monta um arquivo .asm para um binário
+assemble:
+> [ -n "$(INPUT_ASM)" ] || { echo "ERRO: Especifique o arquivo de entrada. Ex: make assemble INPUT_ASM=outputs/assembly.asm"; exit 1; }
+> [ -f "$(INPUT_ASM)" ] || { echo "ERRO: Arquivo de entrada '$(INPUT_ASM)' não encontrado."; exit 1; }
+> mkdir -p $(BIN_DIR)
+> BASENAME=$$(basename -s .asm "$(INPUT_ASM)")
+> OUTFILE="$(OUTPUT_BIN)"
+> [ -n "$$OUTFILE" ] || OUTFILE="$(BIN_DIR)/$$BASENAME.bin"
+> echo "Montando '$(INPUT_ASM)' para '$$OUTFILE'..."
+> python3 "$(ASSEMBLER)" "$(INPUT_ASM)" > "$$OUTFILE"
+> echo "OK: $$OUTFILE"
+
 clean:
 > echo "Limpando..."
 > rm -f $(TARGET) $(OBJS) lex.yy.c analise_sintatica.tab.c analise_sintatica.tab.h

@@ -8,6 +8,7 @@
 # define MAX_IMMEDIATE 1023
 #define VIDEO_BASE 4096
 #define HD_BASE 12288
+#define INSTR_BASE 2048
 
 //Estrutura de pilha
 // O nó que armazena o dado
@@ -139,7 +140,7 @@ int count_symbol(char* name, char* scope, HashTable* symbol_table);
 void free_table(HashTable* table);
 
 //Código intermediário
-enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, LEQ, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN};
+enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, LEQ, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN, BRANCH, SINT, SBLR};
 
 typedef struct tacNo{
     enum operacoes operacao;

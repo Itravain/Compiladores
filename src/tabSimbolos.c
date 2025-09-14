@@ -96,12 +96,14 @@ void iterate_tree(No* root, HashTable* symbol_table) {
                     // Declaração de array: int a[10];
                     if (symbol_node->filho[0] != NULL) {
                         int size;
-                        if(strcmp(symbol_node->lexmema, "VIDEO_MEMORY") == 0){
-                            size = 0;
-                        }
-                        else{
-                            size = atoi(symbol_node->filho[0]->lexmema);
-                        }
+                        if(strcmp(symbol_node->lexmema, "VIDEO_MEMORY") == 0 ||
+                        strcmp(symbol_node->lexmema, "INSTR_MEMORY") == 0 ||
+                        strcmp(symbol_node->lexmema, "HD_MEMORY") == 0) {
+                        size = 0;
+                    }
+                    else {
+                        size = atoi(symbol_node->filho[0]->lexmema);
+                    }
                         new_symbol = create_symbol(symbol_node->lexmema, symbol_node->linha, decl_kind, root->lexmema, scope, size, atualizar_offset(scope, size, 0));
                     }
                     break;

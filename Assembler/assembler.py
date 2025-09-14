@@ -215,6 +215,19 @@ class Assembler:
                 final_binary = ['1110', '11', '010', '0'*23]
             elif mnemonic == "FINISH":
                 final_binary = ['1110', '11', '011', '0'*23]
+            # Instrução para salvar o estado dos registradores base e limite
+            # Formato: Cond[31:28] 11 100 Rn[19:15] Rm[14:10] 0...0
+            elif mnemonic == "SBL":
+                final_binary = ['1110', '11', '100', 
+                                self._get_operand_binary(operands[0]),  # rn
+                                self._get_operand_binary(operands[1]),  # rm
+                                '0'*13]
+            # Formato: Cond[31:28] 11 101 Rn[19:15] Imm[14:12] 0...0
+            elif mnemonic == "SIR":
+                final_binary = ['1110', '11', '101', 
+                                self._get_operand_binary(operands[0]),  # rn
+                                self._get_operand_binary(operands[1], 5),  # imm
+                                '0'*13]
             elif mnemonic == "CMP":
                 # Formato: Cond[31:28] 00 0 0111 1 Rn[19:15] xxxxx Rm[9:5] xxxxx
                 final_binary = [
@@ -318,8 +331,13 @@ if __name__ == "__main__":
     arquivo = sys.argv[1]
     assembler = Assembler()
     
-    # Primeira Passagem: Construir tabela de símbolos
-    address = 0
+    # Pré-Passagem: Identificar quais interrupções existem para calcular o deslocamento de endereço.
+    interrupt_types = {
+        'FinishInterrupt': 0,
+        'ClockInterrupt': 1,
+        'PrintInterrupt': 2
+    }
+    found_interrupts = {} # Armazena o nome e o tipo da interrupção encontrada
     linhas_codigo = []
     with open(arquivo, 'r') as f:
         for i, linha in enumerate(f, 1):
@@ -327,29 +345,99 @@ if __name__ == "__main__":
             if not parsed:
                 continue
             
-            # Armazena a linha parseada com seu número original para mensagens de erro
             parsed['line_num'] = i
             linhas_codigo.append(parsed)
 
-            if parsed['type'] == 'label':
-                if parsed['name'] in assembler.symbol_table:
-                    print(f"Aviso: Label '{parsed['name']}' redefinido na linha {i}.")
-                assembler.symbol_table[parsed['name']] = address
-            elif parsed['type'] == 'instruction':
+            if parsed['type'] == 'label' and parsed['name'] in interrupt_types:
+                if parsed['name'] not in found_interrupts:
+                    found_interrupts[parsed['name']] = interrupt_types[parsed['name']]
+
+    # O deslocamento é 1 (NOP) + 2 instruções (MOVI, SIR) para cada interrupção encontrada.
+    address_offset = 1 + len(found_interrupts) * 2
+    
+    # Primeira Passagem: Construir tabela de símbolos com o deslocamento correto.
+    address = address_offset
+    for parsed in linhas_codigo:
+        if parsed['type'] == 'label':
+            if parsed['name'] in assembler.symbol_table:
+                print(f"Aviso: Label '{parsed['name']}' redefinido na linha {parsed['line_num']}.")
+            assembler.symbol_table[parsed['name']] = address
+        elif parsed['type'] == 'instruction':
+            # A instrução NOP inicial não incrementa o endereço que será usado pelos outros labels
+            if parsed['mnemonic'].upper() != 'NOP':
                 address += 1
 
+    # Imprime o número total de linhas de instrução em binário no início do arquivo.
+    # O valor final de 'address' da primeira passagem é o total de instruções.
+    total_instructions = address
+    print(f'{total_instructions:032b}')
+
     # Segunda Passagem: Gerar código binário
-    address = 0
+    output_address = 0
+    
+    # Encontra e processa a instrução NOP primeiro.
+    nop_instruction = None
+    for i, parsed in enumerate(linhas_codigo):
+        if parsed.get('mnemonic', '').upper() == 'NOP':
+            nop_instruction = linhas_codigo.pop(i)
+            break
+
+    if nop_instruction:
+        try:
+            binary_code = assembler.translate_instruction(nop_instruction, output_address)
+            if(debugar):
+                print(f"Endereço[{output_address}] (Linha {nop_instruction['line_num']}): {nop_instruction['mnemonic']} {nop_instruction['operands']}")
+                print(f"\tBinário: {binary_code}")
+            else:
+                print(binary_code)
+            output_address += 1
+        except Exception as e:
+            print(f"ERRO FATAL ao processar NOP: {e}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        print("AVISO: Nenhuma instrução NOP encontrada no início do código.", file=sys.stderr)
+
+
+    # Inserir instruções de configuração de interrupção
+    for name, type_code in found_interrupts.items():
+        try:
+            interrupt_addr = assembler.symbol_table[name]
+            
+            # 1. MOVI Rad, #interrupt_addr
+            movi_parsed = {'mnemonic': 'MOVI', 'operands': ['Rad', interrupt_addr], 'line_num': 'Auto-gerada'}
+            binary_code = assembler.translate_instruction(movi_parsed, output_address)
+            if(debugar):
+                print(f"Endereço[{output_address}] (Linha {movi_parsed['line_num']}): {movi_parsed['mnemonic']} {movi_parsed['operands']}")
+                print(f"\tBinário: {binary_code}")
+            else:
+                print(binary_code)
+            output_address += 1
+
+            # 2. SIR Rad, #type_code
+            sir_parsed = {'mnemonic': 'SIR', 'operands': ['Rad', type_code], 'line_num': 'Auto-gerada'}
+            binary_code = assembler.translate_instruction(sir_parsed, output_address)
+            if(debugar):
+                print(f"Endereço[{output_address}] (Linha {sir_parsed['line_num']}): {sir_parsed['mnemonic']} {sir_parsed['operands']}")
+                print(f"\tBinário: {binary_code}")
+            else:
+                print(binary_code)
+            output_address += 1
+
+        except Exception as e:
+            print(f"ERRO FATAL ao gerar instrução de interrupção para '{name}': {e}", file=sys.stderr)
+            sys.exit(1)
+
+    # Processar o resto das instruções
     for parsed in linhas_codigo:
         if parsed['type'] == 'instruction':
             try:
-                binary_code = assembler.translate_instruction(parsed, address)
+                binary_code = assembler.translate_instruction(parsed, output_address)
                 if(debugar):
-                    print(f"Endereço[{address}] (Linha {parsed['line_num']}): {parsed['mnemonic']} {parsed['operands']}")
+                    print(f"Endereço[{output_address}] (Linha {parsed['line_num']}): {parsed['mnemonic']} {parsed['operands']}")
                     print(f"\tBinário: {binary_code}")
                 else:
                     print(binary_code)
-                address += 1
+                output_address += 1
             except Exception as e:
                 print(f"ERRO FATAL: {e}", file=sys.stderr)
                 sys.exit(1)

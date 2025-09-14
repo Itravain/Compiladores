@@ -73,7 +73,8 @@ int is_numeric(const char *str) {
 void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabela_simbolos) {
     const char *op_nomes[] = {
         "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "LEQ", "IFF", "RET", "GOTO", "LAB",
-        "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN"
+        "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN",
+        "BRANCH", "SINT", "SBLR"
     };
     
     char *reg_res = get_reg(tac->resultado);
@@ -113,14 +114,15 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             break;
         case LOAD: {
             if (strcmp(tac->op2, "VIDEO_MEMORY") == 0) {
-                // Se for, emite um erro e encerra a compilação.
                 fprintf(stderr, "\nErro de Compilação: Tentativa de leitura da 'VIDEO_MEMORY'.\n");
-                fprintf(stderr, "Esta operação não é suportada pelo hardware de destino, que é write-only.\n");
-                exit(1); // Encerra o compilador com um código de erro.
-            }  
+                exit(1);
+            }
+            else if (strcmp(tac->op2, "INSTR_MEMORY") == 0) {
+                fprintf(stderr, "\nErro de Compilação: Tentativa de leitura da 'INSTR_MEMORY' (write-only).\n");
+                exit(1);
+            }
             else if (strcmp(tac->op2, "HD_MEMORY") == 0) {
                 fprintf(arquivoSaida, "    ; Lendo do HD mapeado em memória\n");
-                // Endereço base do HD + índice (se houver) -> LDR destino
                 emit_movi(arquivoSaida, "Rad", HD_BASE);
                 if (strcmp(get_reg(tac->resultado), "") != 0) {
                     char* reg_idx = get_reg(tac->resultado);
@@ -129,7 +131,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 }
                 fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", get_reg(tac->op1));
             }
-            else{
+            else {
                 // Verifica se a variável (tac->op1) é global
                 Symbol* simbolo = find_symbol(tabela_simbolos, tac->op2, "GLOBAL");
                 if (simbolo != NULL) { // É global
@@ -226,22 +228,24 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
 
         case STORE: {
             if (strcmp(tac->op1, "VIDEO_MEMORY") == 0) {
-                fprintf(arquivoSaida, "    ; Armazenando em array de video 'VIDEO_MEMORY'\n");
-                // 1. Carrega o endereço base da VRAM
+                fprintf(arquivoSaida, "    ; Armazenando em VIDEO_MEMORY\n");
                 emit_movi(arquivoSaida, "Rad", VIDEO_BASE);
-                // 2. Adiciona o deslocamento (índice, que está em reg_op2) ao endereço base
                 fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op2);
-                // 3. Armazena o valor (que está em reg_res) no endereço final
                 fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_res);
             }
             else if (strcmp(tac->op1, "HD_MEMORY") == 0) {
-                fprintf(arquivoSaida, "    ; Escrevendo no HD mapeado em memória\n");
-                // Endereço base do HD + índice (em reg_op2) -> STR valor (reg_res)
+                fprintf(arquivoSaida, "    ; Escrevendo no HD mapeado\n");
                 emit_movi(arquivoSaida, "Rad", HD_BASE);
                 fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op2);
                 fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_res);
             }
-            else{
+            else if (strcmp(tac->op1, "INSTR_MEMORY") == 0) {
+                fprintf(arquivoSaida, "    ; Escrevendo na memória de instruções (write-only)\n");
+                emit_movi(arquivoSaida, "Rad", INSTR_BASE);
+                fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op2);
+                fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_res);
+            }
+            else {
                 Symbol* simbolo = find_symbol(tabela_simbolos, tac->op1, "GLOBAL");
                 if (simbolo != NULL) { // É global
                     if (simbolo->id_type == var_k){
@@ -319,6 +323,9 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             if (strcmp(tac->op2, "main") == 0) {
                 fprintf(arquivoSaida, "    MOV FP, SP\n");
             }
+            else if(strcmp(tac->op2, "FinishInterrupt") == 0){
+                //Não faz nada
+            }
             else {
                 emit_addi(arquivoSaida, "Rlink", "Rlink", 1);
                 fprintf(arquivoSaida, "    STR Rlink [SP #0]\n");
@@ -332,13 +339,28 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         case END:
             if (strcmp(tac->op1, "main") != 0){
                 Symbol* simbolo = find_symbol(tabela_simbolos, tac->op1, "GLOBAL");
+                if(strcmp(tac->op1, "FinishInterrupt") == 0) {
+                    //Retornar os valores dos registradores base
+                    fprintf(arquivoSaida,"    SBL R0, R0\n");
+                    fprintf(arquivoSaida,"    MOVI Rad, #%d\n", 2);
+                    fprintf(arquivoSaida,"    SBL Rad, R0\n");
+                    //Retornar para o início do programa
+                    fprintf(arquivoSaida,"    BI #0\n");
+                }
+                else if(strcmp(tac->op1, "PrintInterrupt") == 0){
+
+                }
+                else if(strcmp(tac->op1, "ClockInterrupt") == 0){
+
+                }
                 //Retorno apenas em funções void
-                if(strcmp(simbolo->type, "void") == 0){
+                else if(strcmp(simbolo->type, "void") == 0){
                     fprintf(arquivoSaida,"    LDR Rlink [FP #1]\n", get_reg(tac->op1), get_reg(tac->op2));
                     fprintf(arquivoSaida,"    MOV SP, FP\n", get_reg(tac->op1), get_reg(tac->op2));
                     fprintf(arquivoSaida,"    LDR FP [FP #0]\n", get_reg(tac->op1), get_reg(tac->op2));
                     fprintf(arquivoSaida,"    B Rlink\n", get_reg(tac->op1), get_reg(tac->op2));
                 }
+                
             }
             
             break;
@@ -380,8 +402,10 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             break;
         }
         case ALLOC: {
-            if (strcmp(tac->op1, "VIDEO_MEMORY") == 0 || strcmp(tac->op1, "HD_MEMORY") == 0){
-
+            if (strcmp(tac->op1, "VIDEO_MEMORY") == 0 ||
+                strcmp(tac->op1, "HD_MEMORY") == 0 ||
+                strcmp(tac->op1, "INSTR_MEMORY") == 0) {
+                // memória mapeada – nada a fazer
             }
             else if (strcmp(tac->resultado, "") == 0) {
                 emit_addi(arquivoSaida, "SP", "SP", 1);
@@ -390,13 +414,11 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 if (is_numeric(tac->resultado)) {
                     emit_addi(arquivoSaida, "SP", "SP", atoi(tac->resultado));
                 } else {
-                    // Caso improvável aqui: se não for numérico, carregue em Rad e use ADD.
                     fprintf(arquivoSaida, "    ; ADD com valor não imediato literal\n");
                     fprintf(arquivoSaida, "    MOV Rad, %s\n", get_reg(tac->resultado));
                     fprintf(arquivoSaida, "    ADD SP, SP, Rad\n");
                 }
             }
-            
             break;
         }
         case ASSIGN: {
@@ -412,6 +434,18 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             fprintf(arquivoSaida,"    MOV SP, FP\n", get_reg(tac->op1), get_reg(tac->op2));
             fprintf(arquivoSaida,"    LDR FP [FP #0]\n", get_reg(tac->op1), get_reg(tac->op2));
             fprintf(arquivoSaida,"    B Rlink\n", get_reg(tac->op1), get_reg(tac->op2));
+            break;
+        }
+        case BRANCH: {
+            fprintf(arquivoSaida, "    BI #0\n");
+            break;
+        }
+        case SINT: {
+            fprintf(arquivoSaida, "    SIR %s, %s\n", reg_op1, reg_op2);
+            break;
+        }
+        case SBLR: {
+            fprintf(arquivoSaida, "    SBL %s, %s\n", reg_op1, reg_op2);
             break;
         }
         case GREATER:{
