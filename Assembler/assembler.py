@@ -2,7 +2,7 @@ import re
 import sys
 
 debugar = True
-# debugar = False
+debugar = False
 
 class Assembler:
     import re

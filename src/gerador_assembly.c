@@ -131,6 +131,16 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 }
                 fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", get_reg(tac->op1));
             }
+            else if (strcmp(tac->op2, "TIMER_CONF") == 0) {
+                fprintf(arquivoSaida, "    ; Lendo do TIMER mapeado em memória\n");
+                emit_movi(arquivoSaida, "Rad", TIMER_BASE);
+                if (strcmp(get_reg(tac->resultado), "") != 0) {
+                    char* reg_idx = get_reg(tac->resultado);
+                    fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_idx);
+                    free(reg_idx);
+                }
+                fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", get_reg(tac->op1));
+            }
             else {
                 // Verifica se a variável (tac->op1) é global
                 Symbol* simbolo = find_symbol(tabela_simbolos, tac->op2, "GLOBAL");
@@ -236,6 +246,12 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             else if (strcmp(tac->op1, "HD_MEMORY") == 0) {
                 fprintf(arquivoSaida, "    ; Escrevendo no HD mapeado\n");
                 emit_movi(arquivoSaida, "Rad", HD_BASE);
+                fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op2);
+                fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_res);
+            }
+            else if (strcmp(tac->op1, "TIMER_CONF") == 0) {
+                fprintf(arquivoSaida, "    ; Escrevendo no timer mapeado\n");
+                emit_movi(arquivoSaida, "Rad", TIMER_BASE);
                 fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op2);
                 fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_res);
             }
@@ -404,7 +420,8 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         case ALLOC: {
             if (strcmp(tac->op1, "VIDEO_MEMORY") == 0 ||
                 strcmp(tac->op1, "HD_MEMORY") == 0 ||
-                strcmp(tac->op1, "INSTR_MEMORY") == 0) {
+                strcmp(tac->op1, "INSTR_MEMORY") == 0||
+                strcmp(tac->op1, "TIMER_CONF") == 0) {
                 // memória mapeada – nada a fazer
             }
             else if (strcmp(tac->resultado, "") == 0) {

@@ -98,7 +98,7 @@ void iterate_tree(No* root, HashTable* symbol_table) {
                         int size;
                         if(strcmp(symbol_node->lexmema, "VIDEO_MEMORY") == 0 ||
                         strcmp(symbol_node->lexmema, "INSTR_MEMORY") == 0 ||
-                        strcmp(symbol_node->lexmema, "HD_MEMORY") == 0) {
+                        strcmp(symbol_node->lexmema, "HD_MEMORY") == 0 || strcmp(symbol_node->lexmema, "TIMER_CONF") == 0) {
                         size = 0;
                     }
                     else {

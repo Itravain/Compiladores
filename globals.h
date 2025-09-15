@@ -7,8 +7,9 @@
 
 # define MAX_IMMEDIATE 1023
 #define VIDEO_BASE 4096
-#define HD_BASE 12288
+#define HD_BASE 8960
 #define INSTR_BASE 2048
+#define TIMER_BASE 25344
 
 //Estrutura de pilha
 // O nó que armazena o dado
