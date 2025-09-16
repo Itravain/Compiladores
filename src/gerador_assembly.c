@@ -131,6 +131,16 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 }
                 fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", get_reg(tac->op1));
             }
+            else if (strcmp(tac->op2, "RAM_MEMORY") == 0) {
+                fprintf(arquivoSaida, "    ; Lendo da RAM mapeada em memória\n");
+                emit_movi(arquivoSaida, "Rad", RAM_BASE);
+                if (strcmp(get_reg(tac->resultado), "") != 0) {
+                    char* reg_idx = get_reg(tac->resultado);
+                    fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_idx);
+                    free(reg_idx);
+                }
+                fprintf(arquivoSaida, "    LDR %s, [Rad, #0]\n", get_reg(tac->op1));
+            }
             else if (strcmp(tac->op2, "TIMER_CONF") == 0) {
                 fprintf(arquivoSaida, "    ; Lendo do TIMER mapeado em memória\n");
                 emit_movi(arquivoSaida, "Rad", TIMER_BASE);
@@ -246,6 +256,12 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             else if (strcmp(tac->op1, "HD_MEMORY") == 0) {
                 fprintf(arquivoSaida, "    ; Escrevendo no HD mapeado\n");
                 emit_movi(arquivoSaida, "Rad", HD_BASE);
+                fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op2);
+                fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_res);
+            }
+            else if (strcmp(tac->op1, "RAM_MEMORY") == 0) {
+                fprintf(arquivoSaida, "    ; Escrevendo na RAM mapeada\n");
+                emit_movi(arquivoSaida, "Rad", RAM_BASE);
                 fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op2);
                 fprintf(arquivoSaida, "    STR %s, [Rad, #0]\n", reg_res);
             }
@@ -419,6 +435,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         }
         case ALLOC: {
             if (strcmp(tac->op1, "VIDEO_MEMORY") == 0 ||
+                strcmp(tac->op1, "RAM_MEMORY") == 0 ||
                 strcmp(tac->op1, "HD_MEMORY") == 0 ||
                 strcmp(tac->op1, "INSTR_MEMORY") == 0||
                 strcmp(tac->op1, "TIMER_CONF") == 0) {
@@ -465,6 +482,16 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             fprintf(arquivoSaida, "    SBL %s, %s\n", reg_op1, reg_op2);
             break;
         }
+        case ASM_LDR: {
+            // TAC: (ASM_LDR, dest, base, offset) -> LDR Rdest, [Rbase, Roffset]
+            fprintf(arquivoSaida, "    LDR %s, [%s, %s]\n", reg_res, reg_op1, reg_op2);
+            break;
+        }
+        case ASM_STR: {
+            // TAC: (ASM_STR, value, base, offset) -> STR Rvalue, [Rbase, Roffset]
+            fprintf(arquivoSaida, "    STR %s, [%s, %s]\n", reg_res, reg_op1, reg_op2);
+            break;
+        }
         case GREATER:{
             fprintf(arquivoSaida, "    CMP %s, %s\n", reg_op2, reg_res);
             fprintf(arquivoSaida, "    BLE %s\n", tac->proximo->op2);
@@ -477,7 +504,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         }
         case LEQ:{
             fprintf(arquivoSaida, "    CMP %s, %s\n",reg_op2, reg_res);
-            fprintf(arquivoSaida, "    BGT %s\n", tac->proximo->op2); // Salta para fora do laço se op1 > op2
+            fprintf(arquivoSaida, "    BGT %s\n", tac->proximo->op2);
             break;
         }
         case LESS:{

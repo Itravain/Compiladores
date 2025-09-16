@@ -5,9 +5,12 @@
 #define NUMMAXFILHOS 3
 #define MAXLEXEME 25
 
-# define MAX_IMMEDIATE 1023
+#define MAX_IMMEDIATE 1023
 #define VIDEO_BASE 4096
+#define RAM_BASE 0
 #define HD_BASE 8960
+#define HD_LIM 25343
+
 #define INSTR_BASE 2048
 #define TIMER_BASE 25344
 
@@ -62,7 +65,7 @@ void free_stack(Pilha *p);
 
 // Árvore de sintaxe abstrata
 typedef enum {statement_k, expression_k, declaration_k} NodeKind;
-typedef enum {if_k, while_k, return_k, break_k, continue_k, expression_statement_k} StatementKind;
+typedef enum {if_k, while_k, return_k, break_k, continue_k, expression_statement_k, asm_k} StatementKind;
 typedef enum {op_k, constant_k, id_k, type_k, arr_k, ativ_k, assign_k, parametro_exp_t} ExpressionKind;
 typedef enum {var_k, fun_k, param_k, param_array_k, array_k, unknown_k} DeclarationKind;
 
@@ -141,7 +144,7 @@ int count_symbol(char* name, char* scope, HashTable* symbol_table);
 void free_table(HashTable* table);
 
 //Código intermediário
-enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, LEQ, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN, BRANCH, SINT, SBLR};
+enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, LEQ, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN, BRANCH, SINT, SBLR, ASM_LDR, ASM_STR};
 
 typedef struct tacNo{
     enum operacoes operacao;
