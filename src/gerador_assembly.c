@@ -74,7 +74,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
     const char *op_nomes[] = {
         "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "LEQ", "IFF", "RET", "GOTO", "LAB",
         "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN",
-        "BRANCH", "SINT", "SBLR"
+        "BRANCH", "SINT", "SBLR", "SAVE_REGS", "LOAD_REGS"
     };
     
     char *reg_res = get_reg(tac->resultado);
@@ -356,7 +356,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 fprintf(arquivoSaida, "    MOV FP, SP\n");
             }
             else if(strcmp(tac->op2, "FinishInterrupt") == 0){
-                //Não faz nada
+
             }
             else {
                 emit_addi(arquivoSaida, "Rlink", "Rlink", 1);
@@ -372,12 +372,8 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             if (strcmp(tac->op1, "main") != 0){
                 Symbol* simbolo = find_symbol(tabela_simbolos, tac->op1, "GLOBAL");
                 if(strcmp(tac->op1, "FinishInterrupt") == 0) {
-                    //Retornar os valores dos registradores base
-                    fprintf(arquivoSaida,"    SBL R0, R0\n");
-                    fprintf(arquivoSaida,"    MOVI Rad, #%d\n", 2);
-                    fprintf(arquivoSaida,"    SBL Rad, R0\n");
                     //Retornar para o início do programa
-                    fprintf(arquivoSaida,"    BI #0\n");
+                    fprintf(arquivoSaida,"    B Rlink\n");
                 }
                 else if(strcmp(tac->op1, "PrintInterrupt") == 0){
 
@@ -482,14 +478,41 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             fprintf(arquivoSaida, "    SBL %s, %s\n", reg_op1, reg_op2);
             break;
         }
-        case ASM_LDR: {
-            // TAC: (ASM_LDR, dest, base, offset) -> LDR Rdest, [Rbase, Roffset]
-            fprintf(arquivoSaida, "    LDR %s, [%s, %s]\n", reg_res, reg_op1, reg_op2);
+        case LOAD_REGS: {
+            // TAC: (LOAD_REGS, hd_pos_reg, "", "")
+            // Expande para uma série de STRs para salvar todos os registradores.
+            fprintf(arquivoSaida, "    ; Salvando registradores no HD a partir da posição em %s\n", reg_op1);
+            
+            // 1. Calcula o endereço base no HD e armazena em Rad.
+            emit_movi(arquivoSaida, "Rad", HD_BASE);
+            fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op1); // Rad = HD_BASE + hd_initial_pos
+
+            // 2. Salva cada registrador em um offset sequencial.
+            for (int i = 0; i <= 31; i++) {
+                // Gera LDR Ri, [Rad, #i]
+                fprintf(arquivoSaida, "    LDR R%d, [Rad, #%d]\n", i, i);
+            }
             break;
         }
-        case ASM_STR: {
-            // TAC: (ASM_STR, value, base, offset) -> STR Rvalue, [Rbase, Roffset]
-            fprintf(arquivoSaida, "    STR %s, [%s, %s]\n", reg_res, reg_op1, reg_op2);
+        case SAVE_REGS: {
+            // TAC: (SAVE_REGS, hd_pos_reg, "", "")
+            // Expande para uma série de STRs para salvar todos os registradores.
+            fprintf(arquivoSaida, "    ; Salvando registradores no HD a partir da posição em %s\n", reg_op1);
+            
+            // 1. Calcula o endereço base no HD e armazena em Rad.
+            emit_movi(arquivoSaida, "Rad", HD_BASE);
+            fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op1); // Rad = HD_BASE + hd_initial_pos
+
+            // 2. Salva cada registrador em um offset sequencial.
+            for (int i = 0; i <= 31; i++) {
+                // Gera STR Ri, [Rad, #i]
+                if (i == 31) {
+                    fprintf(arquivoSaida, "    SPL\n");
+                    fprintf(arquivoSaida, "    ADDI Rlink, Rlink, #4\n");
+
+                }
+                fprintf(arquivoSaida, "    STR R%d, [Rad, #%d]\n", i, i);
+            }
             break;
         }
         case GREATER:{

@@ -130,6 +130,15 @@ class Assembler:
                     self._get_operand_binary(operands[0]),  # rd
                     self._get_operand_binary(operands[1], 10)  # imm
                 ]
+            elif mnemonic == "SPL":
+                # Salva o PC no Rlink sem desvio.
+                # Formato: Cond=1110, Op=11, SubOp=110, Resto=0
+                final_binary = [
+                    '1110',      # Cond[31:28] = Always
+                    '11',        # Op[27:26]   = Outras Instruções
+                    '110',       # SubOp[25:23]= Opcode para SPL
+                    '0'*23       # Resto[22:0] = Não utilizado
+                ]
             elif mnemonic == "LDR":
                 # Exemplo: LDR R1, [R2, #4] -> operands = ['R1', 'R2', 4]
                 final_binary = [

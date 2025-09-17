@@ -144,7 +144,7 @@ int count_symbol(char* name, char* scope, HashTable* symbol_table);
 void free_table(HashTable* table);
 
 //Código intermediário
-enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, LEQ, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN, BRANCH, SINT, SBLR, ASM_LDR, ASM_STR};
+enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, LEQ, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN, BRANCH, SINT, SBLR, SAVE_REGS, LOAD_REGS};
 
 typedef struct tacNo{
     enum operacoes operacao;
