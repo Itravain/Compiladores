@@ -74,7 +74,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
     const char *op_nomes[] = {
         "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "LEQ", "IFF", "RET", "GOTO", "LAB",
         "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN",
-        "BRANCH", "SINT", "SBLR", "SAVE_REGS", "LOAD_REGS"
+        "BRANCH", "SINT", "SBLR", "SAVE_REGS", "LOAD_REGS", "SAVE_REGS_SO"
     };
     
     char *reg_res = get_reg(tac->resultado);
@@ -358,6 +358,12 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             else if(strcmp(tac->op2, "FinishInterrupt") == 0){
 
             }
+            else if(strcmp(tac->op2, "ClockInterrupt") == 0){
+                emit_addi(arquivoSaida, "Rlink", "Rlink", 1);
+            }
+            else if(strcmp(tac->op2, "PrintInterrupt") == 0){
+
+            }
             else {
                 emit_addi(arquivoSaida, "Rlink", "Rlink", 1);
                 fprintf(arquivoSaida, "    STR Rlink [SP #0]\n");
@@ -495,7 +501,23 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             break;
         }
         case SAVE_REGS: {
-            // TAC: (SAVE_REGS, hd_pos_reg, "", "")
+            // TAC: (SAVE_REGS, hd_pos_reg, offset, "")
+            // Expande para uma série de STRs para salvar todos os registradores.
+            fprintf(arquivoSaida, "    ; Salvando registradores no HD a partir da posição em %s\n", reg_op1);
+            
+            // 1. Calcula o endereço base no HD e armazena em Rad.
+            emit_movi(arquivoSaida, "Rad", HD_BASE);
+            fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op1); // Rad = HD_BASE + hd_initial_pos
+
+            // 2. Salva cada registrador em um offset sequencial.
+            for (int i = 0; i <= 31; i++) {
+                // Gera STR Ri, [Rad, #i]
+                fprintf(arquivoSaida, "    STR R%d, [Rad, #%d]\n", i, i);
+            }
+            break;
+        }
+        case SAVE_REGS_SO: {
+            // TAC: (SAVE_REGS, hd_pos_reg, offset, "")
             // Expande para uma série de STRs para salvar todos os registradores.
             fprintf(arquivoSaida, "    ; Salvando registradores no HD a partir da posição em %s\n", reg_op1);
             
@@ -508,8 +530,7 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
                 // Gera STR Ri, [Rad, #i]
                 if (i == 31) {
                     fprintf(arquivoSaida, "    SPL\n");
-                    fprintf(arquivoSaida, "    ADDI Rlink, Rlink, #4\n");
-
+                    fprintf(arquivoSaida, "    ADD Rlink, Rlink, %s\n", reg_op2);
                 }
                 fprintf(arquivoSaida, "    STR R%d, [Rad, #%d]\n", i, i);
             }

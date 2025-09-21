@@ -19,7 +19,7 @@ const char* get_decl_kind_as_string(DeclarationKind kind) {
 const char *operacoes_nomes[] = {
     "FUN", "ARG", "LOAD", "EQUAL", "GREATER", "LESS", "LEQ", "IFF", "RET", "GOTO", "LAB",
     "PARAM", "DIV", "MUL", "SUB", "CALL", "END", "STORE", "HALT", "SUM", "ALLOC", "ASSIGN",
-    "BRANCH", "SINT", "SBLR", "SAVE_REGS", "LOAD_REGS"
+    "BRANCH", "SINT", "SBLR", "SAVE_REGS", "LOAD_REGS", "SAVE_REGS_SO"
 };
 const int NUM_OPERACOES = sizeof(operacoes_nomes) / sizeof(operacoes_nomes[0]);
 
@@ -415,13 +415,26 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, HashTable *symbol_tabl
                     }
                     if (strcmp(node_tree->lexmema, "save_reg_mem") == 0) {
                         char *hd_pos_reg = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
-
                         if (hd_pos_reg) {
                             // TAC: (SAVE_REGS, hd_pos_reg, "", "")
                             *tac_list_ptr = criarNoTac(*tac_list_ptr, SAVE_REGS, hd_pos_reg, "", "");
                             free(hd_pos_reg);
                         } else {
                             fprintf(stderr, "Erro [save_reg_mem]: Argumento inválido na linha %d.\n", node_tree->linha);
+                        }
+                        result_str = NULL;
+                        break;
+                    }
+                    if (strcmp(node_tree->lexmema, "save_reg_mem_so") == 0) {
+                        char *hd_pos_reg = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
+                        char *offset_link = percorrer_arvore(node_tree->filho[0]->irmao, tac_list_ptr, symbol_table, 0, 0);
+
+                        if (hd_pos_reg) {
+                            // TAC: (SAVE_REGS_SO, hd_pos_reg, "", "")
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, SAVE_REGS_SO, hd_pos_reg, offset_link, "");
+                            free(hd_pos_reg);
+                        } else {
+                            fprintf(stderr, "Erro [save_reg_mem_so]: Argumento inválido na linha %d.\n", node_tree->linha);
                         }
                         result_str = NULL;
                         break;
