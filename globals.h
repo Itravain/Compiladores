@@ -6,13 +6,13 @@
 #define MAXLEXEME 25
 
 #define MAX_IMMEDIATE 1023
-#define VIDEO_BASE 4096
 #define RAM_BASE 0
-#define HD_BASE 8960
-#define HD_LIM 25343
-
 #define INSTR_BASE 2048
-#define TIMER_BASE 25344
+#define VIDEO_BASE 6144
+#define HD_BASE 11008
+#define HD_LIM 27391
+
+#define TIMER_BASE 27392
 
 //Estrutura de pilha
 // O nó que armazena o dado
@@ -144,7 +144,7 @@ int count_symbol(char* name, char* scope, HashTable* symbol_table);
 void free_table(HashTable* table);
 
 //Código intermediário
-enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, LEQ, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN, BRANCH, SINT, SBLR, SAVE_REGS, LOAD_REGS};
+enum operacoes {FUN, ARG, LOAD, EQUAL, GREATER, LESS, LEQ, IFF, RET, GOTO, LAB, PARAM, DIV, MUL, SUB, CALL, END, STORE, HALT, SUM, ALLOC, ASSIGN, BRANCH, SINT, SBLR, SAVE_REGS, LOAD_REGS, SAVE_REGS_SO};
 
 typedef struct tacNo{
     enum operacoes operacao;
