@@ -4,7 +4,7 @@
 #include "../globals.h"
 #define NUMMAXFILHOS 3
 #define MAXLEXEME 25
-#define MAX_TEMP 23
+#define MAX_TEMP 22
 
 const char* get_decl_kind_as_string(DeclarationKind kind) {
     switch (kind) {
@@ -404,7 +404,7 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, HashTable *symbol_tabl
                         char *hd_pos_reg = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
 
                         if (hd_pos_reg) {
-                            // TAC: (LOAD_REG, hd_pos_reg, "", "")
+                            // TAC: (LOAD_REGS, hd_pos_reg, "", "")
                             *tac_list_ptr = criarNoTac(*tac_list_ptr, LOAD_REGS, hd_pos_reg, "", "");
                             free(hd_pos_reg);
                         } else {
@@ -426,21 +426,32 @@ char *percorrer_arvore(No *node_tree, Tac **tac_list_ptr, HashTable *symbol_tabl
                         break;
                     }
                     if (strcmp(node_tree->lexmema, "save_reg_mem_so") == 0) {
-                        char *hd_pos_reg = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
-                        char *offset_link = percorrer_arvore(node_tree->filho[0]->irmao, tac_list_ptr, symbol_table, 0, 0);
-
-                        if (hd_pos_reg) {
-                            // TAC: (SAVE_REGS_SO, hd_pos_reg, "", "")
-                            *tac_list_ptr = criarNoTac(*tac_list_ptr, SAVE_REGS_SO, hd_pos_reg, offset_link, "");
-                            free(hd_pos_reg);
-                        } else {
-                            fprintf(stderr, "Erro [save_reg_mem_so]: Argumento inválido na linha %d.\n", node_tree->linha);
-                        }
+                        // TAC: (SAVE_REGS_SO, hd_pos_reg, "", "")
+                        *tac_list_ptr = criarNoTac(*tac_list_ptr, SAVE_REGS_SO, "", "", "");
                         result_str = NULL;
                         break;
                     }
                     if (strcmp(node_tree->lexmema, "branch") == 0) {
-                        *tac_list_ptr = criarNoTac(*tac_list_ptr, BRANCH, "", "", "");
+                        
+                        // Special handling for set_b_l_reg(base, limit)
+                        char *base_reg = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
+                        char *limit_reg = percorrer_arvore(node_tree->filho[0]->irmao, tac_list_ptr, symbol_table, 0, 0);
+                        char *hd_pos_reg = percorrer_arvore(node_tree->filho[0], tac_list_ptr, symbol_table, 0, 0);
+                        
+                        if (base_reg && limit_reg && hd_pos_reg)
+                        {
+                            *tac_list_ptr = criarNoTac(*tac_list_ptr, BRANCH, base_reg, limit_reg, hd_pos_reg);
+                            free(base_reg);
+                            free(limit_reg);
+                            free(hd_pos_reg);
+                        }
+                        else {
+                            fprintf(stderr, "Erro [branch]: Argumentos inválidos na linha %d.\n", node_tree->linha);
+                            free(base_reg);
+                            free(limit_reg);
+                            free(hd_pos_reg);
+                        }
+                        
                         result_str = NULL; // run_program does not return a value
                         break;
                     }

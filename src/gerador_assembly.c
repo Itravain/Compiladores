@@ -473,6 +473,32 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
             break;
         }
         case BRANCH: {
+            fprintf(arquivoSaida, "    STR FP [SP, #0]\n");
+            fprintf(arquivoSaida, "    MOV FP, SP\n");
+            emit_addi(arquivoSaida, "SP", "SP", 1);
+            fprintf(arquivoSaida, "    SPL\n");
+            emit_addi(arquivoSaida, "Rlink", "Rlink", 7);
+            fprintf(arquivoSaida, "    STR Rlink [SP #0]\n");
+            emit_addi(arquivoSaida, "SP", "SP", 1);
+            /*Salvar registradores do SO*/
+            fprintf(arquivoSaida, "    ; Salvando registradoes do SO\n"); 
+            fprintf(arquivoSaida, "    STR FP [R0 #0]\n");
+            fprintf(arquivoSaida, "    STR SP [R0 #1]\n");
+
+            /*Setar registradores base*/
+            fprintf(arquivoSaida, "    ; Carregando registradores no HD a partir da posição em %s\n", reg_res); 
+            // 1. Calcula o endereço base no HD e armazena em Rad.
+            emit_movi(arquivoSaida, "Rad", HD_BASE);
+            fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_res);
+            // 2. Salva cada registrador em um offset sequencial.
+            for (int i = 0; i <= 31; i++) {
+                // Gera LDR Ri, [Rad, #i]
+                fprintf(arquivoSaida, "    LDR R%d, [Rad, #%d]\n", i, i);
+            }
+            /*Talvez dê problema!!!*/
+            fprintf(arquivoSaida, "    SBL R0, %s \n", reg_op1);
+            fprintf(arquivoSaida, "    SBL R2, %s \n", reg_op2);
+            /*Pular para novo programa*/
             fprintf(arquivoSaida, "    BI #0\n");
             break;
         }
@@ -519,21 +545,12 @@ void traduzir_tac_para_assembly(FILE *arquivoSaida, TacNo *tac, HashTable *tabel
         case SAVE_REGS_SO: {
             // TAC: (SAVE_REGS, hd_pos_reg, offset, "")
             // Expande para uma série de STRs para salvar todos os registradores.
-            fprintf(arquivoSaida, "    ; Salvando registradores no HD a partir da posição em %s\n", reg_op1);
-            
-            // 1. Calcula o endereço base no HD e armazena em Rad.
-            emit_movi(arquivoSaida, "Rad", HD_BASE);
-            fprintf(arquivoSaida, "    ADD Rad, Rad, %s\n", reg_op1); // Rad = HD_BASE + hd_initial_pos
+            fprintf(arquivoSaida, "    ; Salvando registradores do SO na início da memória\n");
 
-            // 2. Salva cada registrador em um offset sequencial.
-            for (int i = 0; i <= 31; i++) {
-                // Gera STR Ri, [Rad, #i]
-                if (i == 31) {
-                    fprintf(arquivoSaida, "    SPL\n");
-                    fprintf(arquivoSaida, "    ADD Rlink, Rlink, %s\n", reg_op2);
-                }
-                fprintf(arquivoSaida, "    STR R%d, [Rad, #%d]\n", i, i);
-            }
+
+            fprintf(arquivoSaida, "    STR SP, [R0, #1]\n");
+            fprintf(arquivoSaida, "    STR FP, [R0, #0]\n");
+
             break;
         }
         case GREATER:{

@@ -4,13 +4,16 @@ import sys
 debugar = True
 debugar = False
 
+header = True
+# header = False  
+
 class Assembler:
     import re
 
 class Assembler:
     def __init__(self):
         self.special_registers = {
-            "RBase": 23,"Rret": 24, "Rad": 25, "SP": 26, "FP": 27, "Rin": 28, 
+            "RPcInter": 22, "RBase": 23,"Rret": 24, "Rad": 25, "SP": 26, "FP": 27, "Rin": 28, 
             "Rout": 29, "CPSR": 30, "Rlink": 31
         }
         self.symbol_table = {}
@@ -379,7 +382,8 @@ if __name__ == "__main__":
     # Imprime o número total de linhas de instrução em binário no início do arquivo.
     # O valor final de 'address' da primeira passagem é o total de instruções.
     total_instructions = address
-    print(f'{total_instructions:032b}')
+    if(header):
+        print(f'{total_instructions:032b}')
 
     # Segunda Passagem: Gerar código binário
     output_address = 0
