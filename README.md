@@ -41,22 +41,6 @@ Este projeto implementa um compilador para C-:
 
 ---
 
-## Pipeline de compilação
-
-```mermaid
-flowchart LR
-    A[Fonte C-] --> B[Scanner (Flex)]
-    B --> C[Parser (Bison)]
-    C --> D[AST]
-    D --> E[Análise Semântica<br/>Tabela de Símbolos]
-    E --> F[TAC]
-    F --> G[Assembly]
-    G --> H[Montador Python]
-    H --> I[Binário (bin/)]
-```
-
----
-
 ## Recursos
 - Suporte a variáveis globais/locais e parâmetros (incluindo arrays).
 - Controle de fluxo: if/else, while, return.
